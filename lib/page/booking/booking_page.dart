@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:park/data/model/parking_lot.dart';
-import 'package:park/bloc/booking_bloc/booking_bloc.dart';
-import 'package:park/config/colors.dart';
-import 'package:park/page/reservation/reservation_page.dart';
 import 'package:park/widgets/custom_date_picker.dart';
+import 'package:park/page/booking/booking_slot_page.dart';
 
 class BookingPage extends StatefulWidget {
   final ParkingLot parkingLot;
@@ -17,40 +13,13 @@ class BookingPage extends StatefulWidget {
 }
 
 class _BookingPageState extends State<BookingPage> {
-  DateTime _selectedDate = DateTime.now();
-  TimeOfDay _startTime = TimeOfDay.now();
-  TimeOfDay _endTime = TimeOfDay.now().replacing(hour: TimeOfDay.now().hour + 1);
+  DateTime? _selectedDate;  // Khởi tạo là nullable
+  TimeOfDay? _startTime;    // Khởi tạo là nullable
+  TimeOfDay? _endTime;      // Khởi tạo là nullable
 
   @override
   void initState() {
     super.initState();
-    _loadSlots();
-  }
-
-  // Hàm này sẽ được gọi mỗi khi thời gian thay đổi
-  void _loadSlots() {
-    final startDateTime = DateTime(
-      _selectedDate.year,
-      _selectedDate.month,
-      _selectedDate.day,
-      _startTime.hour,
-      _startTime.minute,
-    );
-
-    final endDateTime = DateTime(
-      _selectedDate.year,
-      _selectedDate.month,
-      _selectedDate.day,
-      _endTime.hour,
-      _endTime.minute,
-    );
-
-    // Gọi sự kiện LoadSlots để tải lại các slot với thời gian mới
-    context.read<BookingBloc>().add(LoadSlots(
-      widget.parkingLot.id,
-      startDateTime,
-      endDateTime,
-    ));
   }
 
   @override
@@ -58,124 +27,85 @@ class _BookingPageState extends State<BookingPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Đặt chỗ - ${widget.parkingLot.name}'),
-        backgroundColor: blueColor,
+        backgroundColor: Colors.blue,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+      body: Padding(
+        padding: const EdgeInsets.all(16), // Thêm padding cho toàn bộ body
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch, // Giúp các phần tử chiếm hết chiều ngang
           children: [
-            if (widget.parkingLot.imageUrls.isNotEmpty)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Image.network(
-                  widget.parkingLot.parkingLotMap,
-                  height: 180,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                ),
-              ),
-            const SizedBox(height: 12),
-
             // Widget chọn thời gian
             BookingTimePickerWidget(
-              selectedDate: _selectedDate,
-              startTime: _startTime,
-              endTime: _endTime,
-              onDateChanged: (date) => setState(() {
-                _selectedDate = date;
-                _loadSlots(); // Gọi lại khi thay đổi ngày
-              }),
-              onStartTimeChanged: (time) => setState(() {
-                _startTime = time;
-                _loadSlots(); // Gọi lại khi thay đổi thời gian bắt đầu
-              }),
-              onEndTimeChanged: (time) => setState(() {
-                _endTime = time;
-                _loadSlots(); // Gọi lại khi thay đổi thời gian kết thúc
-              }),
+              selectedDate: _selectedDate ?? DateTime.now(),  // Nếu _selectedDate là null, sử dụng ngày hiện tại
+              startTime: _startTime ,      // Nếu _startTime là null, sử dụng giờ hiện tại
+              endTime: _endTime ,          // Nếu _endTime là null, sử dụng giờ hiện tại
+              onDateChanged: (date) => setState(() => _selectedDate = date),
+              onStartTimeChanged: (time) => setState(() => _startTime = time),
+              onEndTimeChanged: (time) => setState(() => _endTime = time),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 20), // Thêm khoảng cách giữa các phần tử
 
-            BlocBuilder<BookingBloc, BookingState>(
-              builder: (context, state) {
-                if (state is BookingLoading) {
-                  return const Padding(
-                    padding: EdgeInsets.all(24),
-                    child: Center(child: CircularProgressIndicator()),
-                  );
-                } else if (state is BookingLoaded) {
-                  return GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    padding: const EdgeInsets.only(top: 16),
-                    itemCount: state.slots.length,
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 4,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
+            // Dùng Spacer để đẩy nút xuống dưới cùng
+            Spacer(),
+
+            // Nút "Chọn Slot Đặt Chỗ" đẹp hơn
+            ElevatedButton(
+              onPressed: () {
+                // Kiểm tra nếu ngày và giờ chưa được chọn
+                if (_selectedDate == null || _startTime == null || _endTime == null) {
+                  // Hiển thị thông báo nếu chưa chọn đầy đủ
+                  showDialog(
+                    context: context,
+                    builder: (_) => AlertDialog(
+                      title: const Text('Thông báo'),
+                      content: const Text('Vui lòng chọn đầy đủ ngày và giờ!'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('OK'),
+                        )
+                      ],
                     ),
-                    itemBuilder: (context, index) {
-                      final slot = state.slots[index];
-
-                      return GestureDetector(
-                        onTap: () {
-                          if (!slot.isBooked) {
-                            final startDateTime = DateTime(
-                              _selectedDate.year,
-                              _selectedDate.month,
-                              _selectedDate.day,
-                              _startTime.hour,
-                              _startTime.minute,
-                            );
-                            final endDateTime = DateTime(
-                              _selectedDate.year,
-                              _selectedDate.month,
-                              _selectedDate.day,
-                              _endTime.hour,
-                              _endTime.minute,
-                            );
-
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ReservationPage(
-                                  parkingLot: widget.parkingLot,
-                                  slot: slot,
-                                  startTime: startDateTime,
-                                  endTime: endDateTime,
-                                ),
-                              ),
-                            );
-                          }
-                        },
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: slot.isBooked ? Colors.grey[700] : Colors.green[300],
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            slot.id,
-                            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-                          ),
-                        ),
-                      );
-                    },
                   );
-                } else if (state is BookingError) {
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 24),
-                    child: Center(child: Text(state.message)),
+                } else {
+                  // Nếu đã chọn đầy đủ, chuyển sang trang tiếp theo
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => BookingSlotPage(
+                        parkingLot: widget.parkingLot,
+                        selectedDate: _selectedDate!,
+                        startTime: _startTime!,
+                        endTime: _endTime!,
+                      ),
+                    ),
                   );
                 }
-                return const SizedBox();
               },
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Colors.white, // Màu chữ trên nút
+                backgroundColor: Colors.blue, // Màu nền của nút
+                padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 35), // Điều chỉnh padding
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30), // Bo tròn góc
+                ),
+                elevation: 10, // Đổ bóng cho nút
+                shadowColor: Colors.blueAccent, // Màu bóng của nút
+              ),
+              child: Text(
+                'Continue',
+                style: TextStyle(
+                  fontSize: 20, // Kích thước chữ lớn hơn
+                  fontWeight: FontWeight.bold, // Đậm chữ
+                ),
+              ),
             ),
+
+            const SizedBox(height: 20), // Khoảng cách phía dưới
           ],
         ),
       ),
     );
   }
 }
-

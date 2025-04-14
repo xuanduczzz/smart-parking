@@ -27,7 +27,10 @@ class ReservationPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final _nameController = TextEditingController();
     final _phoneController = TextEditingController();
-    final totalPrice = endTime.difference(startTime).inHours * parkingLot.pricePerHour;
+
+    // Tính tổng giá với cả phần 30 phút nếu có
+    final totalPrice = _calculateTotalPrice(startTime, endTime, parkingLot.pricePerHour);
+
     final dateFormatter = DateFormat('dd/MM/yyyy HH:mm');
 
     bool _validateInputs() {
@@ -136,5 +139,19 @@ class ReservationPage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  // Hàm tính tổng giá, bao gồm cả phần 30 phút
+  double _calculateTotalPrice(DateTime start, DateTime end, double pricePerHour) {
+    // Tính tổng số giờ
+    int hours = end.difference(start).inHours;
+    int minutes = end.difference(start).inMinutes % 60;
+
+    // Nếu có 30 phút thì cộng thêm 1 giờ
+    if (minutes > 0 && minutes <= 30) {
+      hours += 1;
+    }
+
+    return hours * pricePerHour.toDouble();
   }
 }
