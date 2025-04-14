@@ -3,6 +3,7 @@ import 'package:park/data/model/reservation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:park/bloc/reservation_bloc/reservation_bloc.dart';
 import 'package:park/page/map/map_page.dart';
+import 'package:park/bloc/booking_bloc/booking_bloc.dart';
 
 void showConfirmationDialog({
   required BuildContext context,

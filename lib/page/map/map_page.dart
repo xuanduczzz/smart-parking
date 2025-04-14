@@ -74,8 +74,8 @@ class _MapPageState extends State<MapPage> {
                 },
               ),
               ListTile(
-                leading: Icon(Icons.book_online),
-                title: Text('Lịch sử đặt chỗ'),
+                  leading: Icon(Icons.book_online),
+                  title: Text('Lịch sử đặt chỗ'),
                   onTap: () {
                     Navigator.push(
                       context,

@@ -7,6 +7,7 @@ import 'data/auth_repository.dart';
 import 'bloc/auth_bloc/auth_bloc.dart';
 import 'bloc/reservation_bloc/reservation_bloc.dart'; // Import the reservation bloc
 import 'package:park/page/login/login_screen.dart';
+import 'package:park/bloc/booking_bloc/booking_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Bắt buộc khi dùng async trong main()
@@ -22,6 +23,9 @@ void main() async {
         // Cung cấp ReservationBloc
         BlocProvider(
           create: (context) => ReservationBloc(FirebaseFirestore.instance),
+        ),
+        BlocProvider(
+          create: (context) => BookingBloc(FirebaseFirestore.instance),
         ),
       ],
       child: MaterialApp(

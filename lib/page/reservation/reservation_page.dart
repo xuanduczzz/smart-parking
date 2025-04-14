@@ -1,43 +1,44 @@
-// main page - reservation_page.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:park/data/model/slots.dart';
 import 'package:park/data/model/parking_lot.dart';
 import 'package:park/data/model/reservation.dart';
-import 'package:park/bloc/reservation_bloc/reservation_bloc.dart';
-import 'package:park/page/map/map_page.dart';
 import 'widget/reservation_header.dart';
 import 'widget/reservation_inputs.dart';
 import 'widget/reservation_summary.dart';
 import 'widget/reservation_confirmation_dialog.dart';
+import 'package:park/bloc/booking_bloc/booking_bloc.dart';
 
-class ReservationPage extends StatefulWidget {
+class ReservationPage extends StatelessWidget {
   final ParkingLot parkingLot;
   final ParkingSlot slot;
+  final DateTime startTime;
+  final DateTime endTime;
 
-  const ReservationPage({super.key, required this.parkingLot, required this.slot});
-
-  @override
-  _ReservationPageState createState() => _ReservationPageState();
-}
-
-class _ReservationPageState extends State<ReservationPage> {
-  DateTime _startTime = DateTime.now();
-  DateTime _endTime = DateTime.now().add(Duration(hours: 1));
-  final _nameController = TextEditingController();
-  final _phoneController = TextEditingController();
-
-  double get totalPrice => _endTime.difference(_startTime).inHours * widget.parkingLot.pricePerHour;
-
-  bool _validateInputs() {
-    return _nameController.text.isNotEmpty && _phoneController.text.isNotEmpty && !_startTime.isAfter(_endTime);
-  }
+  const ReservationPage({
+    super.key,
+    required this.parkingLot,
+    required this.slot,
+    required this.startTime,
+    required this.endTime,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final _nameController = TextEditingController();
+    final _phoneController = TextEditingController();
+    final totalPrice = endTime.difference(startTime).inHours * parkingLot.pricePerHour;
+    final dateFormatter = DateFormat('dd/MM/yyyy HH:mm');
+
+    bool _validateInputs() {
+      return _nameController.text.isNotEmpty &&
+          _phoneController.text.isNotEmpty &&
+          !startTime.isAfter(endTime);
+    }
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('Đặt chỗ - \${widget.slot.id}'),
+        title: Text('Đặt chỗ - ${slot.id}'),
         backgroundColor: Colors.blueAccent,
       ),
       body: SingleChildScrollView(
@@ -45,13 +46,43 @@ class _ReservationPageState extends State<ReservationPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ReservationHeader(parkingLot: widget.parkingLot, slot: widget.slot),
+            ReservationHeader(parkingLot: parkingLot, slot: slot),
             const SizedBox(height: 20),
-            buildDatePicker('Ngày bắt đầu', _startTime, _selectStartDate),
-            buildTimePicker('Giờ bắt đầu', _startTime, _selectStartTime),
-            const SizedBox(height: 20),
-            buildDatePicker('Ngày kết thúc', _endTime, _selectEndDate),
-            buildTimePicker('Giờ kết thúc', _endTime, _selectEndTime),
+
+            // 🔹 Card hiển thị thời gian
+            Card(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 4,
+              margin: const EdgeInsets.symmetric(vertical: 10),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.access_time, color: Colors.blueAccent),
+                        const SizedBox(width: 8),
+                        const Text('Thời gian bắt đầu:', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(dateFormatter.format(startTime), style: const TextStyle(fontSize: 16)),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        const Icon(Icons.timer_off, color: Colors.redAccent),
+                        const SizedBox(width: 8),
+                        const Text('Thời gian kết thúc:', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(dateFormatter.format(endTime), style: const TextStyle(fontSize: 16)),
+                  ],
+                ),
+              ),
+            ),
+
             const SizedBox(height: 20),
             buildTextField(_nameController, 'Tên người đặt'),
             const SizedBox(height: 20),
@@ -59,6 +90,7 @@ class _ReservationPageState extends State<ReservationPage> {
             const SizedBox(height: 20),
             buildTotalPrice(totalPrice),
             const SizedBox(height: 20),
+
             Center(
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -69,18 +101,17 @@ class _ReservationPageState extends State<ReservationPage> {
                 onPressed: () {
                   if (_validateInputs()) {
                     final reservation = Reservation(
-                      lotId: widget.parkingLot.id,
-                      lotName: widget.parkingLot.name, // ✅ thêm dòng này
-                      slotId: widget.slot.id,
-                      startTime: _startTime,
-                      endTime: _endTime,
-                      pricePerHour: widget.parkingLot.pricePerHour,
+                      lotId: parkingLot.id,
+                      lotName: parkingLot.name,
+                      slotId: slot.id,
+                      startTime: startTime,
+                      endTime: endTime,
+                      pricePerHour: parkingLot.pricePerHour,
                       totalPrice: totalPrice,
                       userId: _nameController.text,
                       vehicleId: "vehicleId_example",
                       phoneNumber: _phoneController.text,
                     );
-
                     showConfirmationDialog(context: context, reservation: reservation);
                   } else {
                     showDialog(
@@ -88,7 +119,12 @@ class _ReservationPageState extends State<ReservationPage> {
                       builder: (_) => AlertDialog(
                         title: const Text('Lỗi'),
                         content: const Text('Vui lòng nhập đầy đủ thông tin và đảm bảo ngày giờ hợp lệ.'),
-                        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('OK'),
+                          )
+                        ],
                       ),
                     );
                   }
@@ -100,49 +136,5 @@ class _ReservationPageState extends State<ReservationPage> {
         ),
       ),
     );
-  }
-
-  Future<void> _selectStartDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _startTime,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
-    );
-    if (picked != null) {
-      setState(() => _startTime = DateTime(picked.year, picked.month, picked.day, _startTime.hour, _startTime.minute));
-    }
-  }
-
-  Future<void> _selectStartTime() async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay(hour: _startTime.hour, minute: _startTime.minute),
-    );
-    if (picked != null) {
-      setState(() => _startTime = DateTime(_startTime.year, _startTime.month, _startTime.day, picked.hour, picked.minute));
-    }
-  }
-
-  Future<void> _selectEndDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _endTime,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
-    );
-    if (picked != null) {
-      setState(() => _endTime = DateTime(picked.year, picked.month, picked.day, _endTime.hour, _endTime.minute));
-    }
-  }
-
-  Future<void> _selectEndTime() async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay(hour: _endTime.hour, minute: _endTime.minute),
-    );
-    if (picked != null) {
-      setState(() => _endTime = DateTime(_endTime.year, _endTime.month, _endTime.day, picked.hour, picked.minute));
-    }
   }
 }
