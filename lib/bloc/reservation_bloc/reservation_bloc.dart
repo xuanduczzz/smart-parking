@@ -16,12 +16,21 @@ class ReservationBloc extends Bloc<ReservationEvent, ReservationState> {
       emit(ReservationLoading());
 
       try {
-        await firestore.collection('reservations').add(event.reservation.toMap());
+        final docRef = await firestore.collection('reservations').add(event.reservation.toMap());
+
+        final reservationId = docRef.id;
+
+        // Tạo chuỗi QR, ví dụ chứa reservationId
+        final qrData = reservationId; // hoặc encode thông tin đầy đủ nếu cần
+
+        await docRef.update({'qrCode': qrData});
+
         emit(ReservationSuccess());
       } catch (e) {
         emit(ReservationError("Lỗi khi lưu đặt chỗ: $e"));
       }
     });
+
 
   }
 }

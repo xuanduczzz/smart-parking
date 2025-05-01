@@ -13,9 +13,9 @@ class BookingPage extends StatefulWidget {
 }
 
 class _BookingPageState extends State<BookingPage> {
-  DateTime? _selectedDate;  // Khởi tạo là nullable
-  TimeOfDay? _startTime;    // Khởi tạo là nullable
-  TimeOfDay? _endTime;      // Khởi tạo là nullable
+  DateTime _selectedDate = DateTime.now();
+  TimeOfDay _startTime = TimeOfDay.now();
+  TimeOfDay _endTime = TimeOfDay.now().replacing(hour: TimeOfDay.now().hour + 1);
 
   @override
   void initState() {
@@ -36,9 +36,9 @@ class _BookingPageState extends State<BookingPage> {
           children: [
             // Widget chọn thời gian
             BookingTimePickerWidget(
-              selectedDate: _selectedDate ?? DateTime.now(),  // Nếu _selectedDate là null, sử dụng ngày hiện tại
-              startTime: _startTime ,      // Nếu _startTime là null, sử dụng giờ hiện tại
-              endTime: _endTime ,          // Nếu _endTime là null, sử dụng giờ hiện tại
+              selectedDate: _selectedDate,
+              startTime: _startTime,
+              endTime: _endTime,
               onDateChanged: (date) => setState(() => _selectedDate = date),
               onStartTimeChanged: (time) => setState(() => _startTime = time),
               onEndTimeChanged: (time) => setState(() => _endTime = time),
@@ -52,36 +52,18 @@ class _BookingPageState extends State<BookingPage> {
             // Nút "Chọn Slot Đặt Chỗ" đẹp hơn
             ElevatedButton(
               onPressed: () {
-                // Kiểm tra nếu ngày và giờ chưa được chọn
-                if (_selectedDate == null || _startTime == null || _endTime == null) {
-                  // Hiển thị thông báo nếu chưa chọn đầy đủ
-                  showDialog(
-                    context: context,
-                    builder: (_) => AlertDialog(
-                      title: const Text('Thông báo'),
-                      content: const Text('Vui lòng chọn đầy đủ ngày và giờ!'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('OK'),
-                        )
-                      ],
+                // Chuyển sang trang booking slot với thông tin thời gian đã chọn
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => BookingSlotPage(
+                      parkingLot: widget.parkingLot,
+                      selectedDate: _selectedDate,
+                      startTime: _startTime,
+                      endTime: _endTime,
                     ),
-                  );
-                } else {
-                  // Nếu đã chọn đầy đủ, chuyển sang trang tiếp theo
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => BookingSlotPage(
-                        parkingLot: widget.parkingLot,
-                        selectedDate: _selectedDate!,
-                        startTime: _startTime!,
-                        endTime: _endTime!,
-                      ),
-                    ),
-                  );
-                }
+                  ),
+                );
               },
               style: ElevatedButton.styleFrom(
                 foregroundColor: Colors.white, // Màu chữ trên nút
@@ -94,7 +76,7 @@ class _BookingPageState extends State<BookingPage> {
                 shadowColor: Colors.blueAccent, // Màu bóng của nút
               ),
               child: Text(
-                'Continue',
+                'Coutinue',
                 style: TextStyle(
                   fontSize: 20, // Kích thước chữ lớn hơn
                   fontWeight: FontWeight.bold, // Đậm chữ

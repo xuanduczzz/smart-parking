@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:park/bloc/auth_bloc/auth_bloc.dart';
-import 'package:park/page/login/signup_screen.dart';
 import 'package:park/page/map/map_page.dart';
+import 'package:park/page/login/signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -13,6 +14,42 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool rememberMe = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserCredentials();
+  }
+
+  // Tải thông tin đăng nhập đã lưu nếu "Remember Me" được chọn
+  Future<void> _loadUserCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    final email = prefs.getString('email');
+    final password = prefs.getString('password');
+    final remember = prefs.getBool('rememberMe') ?? false;
+
+    if (remember) {
+      emailController.text = email ?? '';
+      passwordController.text = password ?? '';
+      setState(() {
+        rememberMe = true;
+      });
+    }
+  }
+
+  // Lưu thông tin đăng nhập khi "Remember Me" được chọn
+  Future<void> _saveUserCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (rememberMe) {
+      await prefs.setString('email', emailController.text);
+      await prefs.setString('password', passwordController.text);
+      await prefs.setBool('rememberMe', true);
+    } else {
+      await prefs.remove('email');
+      await prefs.remove('password');
+      await prefs.setBool('rememberMe', false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,12 +109,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         SnackBar(content: Text(state.error)),
                       );
                     } else if (state is AuthSuccess) {
+                      // Lưu thông tin đăng nhập
+                      _saveUserCredentials();
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text("Login successful!")),
                       );
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => MapPage()), // Replace with your map screen widget
+                        MaterialPageRoute(builder: (context) => MapPage()), // Thay thế bằng widget màn hình bản đồ của bạn
                       );
                     }
                   },

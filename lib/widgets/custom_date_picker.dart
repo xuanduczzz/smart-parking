@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class BookingTimePickerWidget extends StatelessWidget {
   final DateTime selectedDate;
-  final TimeOfDay? startTime;  // Dùng kiểu nullable TimeOfDay
-  final TimeOfDay? endTime;    // Dùng kiểu nullable TimeOfDay
+  final TimeOfDay startTime;
+  final TimeOfDay endTime;
   final ValueChanged<DateTime> onDateChanged;
   final ValueChanged<TimeOfDay> onStartTimeChanged;
   final ValueChanged<TimeOfDay> onEndTimeChanged;
@@ -71,7 +70,7 @@ class BookingTimePickerWidget extends StatelessWidget {
     );
   }
 
-  Widget buildTimeBox(BuildContext context, String label, TimeOfDay? time, VoidCallback onTap) {
+  Widget buildTimeBox(BuildContext context, String label, TimeOfDay time, VoidCallback onTap) {
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,10 +88,7 @@ class BookingTimePickerWidget extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    time != null ? time.format(context) : 'Chưa chọn', // Hiển thị "Chưa chọn" nếu thời gian chưa được chọn
-                    style: const TextStyle(fontSize: 16),
-                  ),
+                  Text(time.format(context), style: const TextStyle(fontSize: 16)),
                   const Icon(Icons.access_time, size: 18, color: Colors.blueAccent),
                 ],
               ),

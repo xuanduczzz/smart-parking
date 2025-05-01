@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:park/data/model/reservation.dart';
 
 part 'reservation_history_event.dart';
@@ -13,8 +14,15 @@ class ReservationHistoryBloc extends Bloc<ReservationHistoryEvent, ReservationHi
       emit(ReservationHistoryLoading());
 
       try {
+        final currentUser = FirebaseAuth.instance.currentUser;
+        if (currentUser == null) {
+          emit(ReservationHistoryError("Chưa đăng nhập."));
+          return;
+        }
+
         final snapshot = await firestore
             .collection('reservations')
+            .where('userId', isEqualTo: currentUser.uid) // ✅ chỉ lấy của người dùng hiện tại
             .orderBy('createdAt', descending: true)
             .get();
 

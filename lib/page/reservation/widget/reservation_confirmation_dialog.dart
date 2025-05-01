@@ -18,7 +18,7 @@ void showConfirmationDialog({
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildDialogInfo('Tên người đặt', reservation.userId),
+            _buildDialogInfo('Tên người đặt', reservation.name),
             _buildDialogInfo('Số điện thoại', reservation.phoneNumber),
             _buildDialogInfo('Ngày bắt đầu', '${reservation.startTime.toLocal()}'.split(' ')[0]),
             _buildDialogInfo('Giờ bắt đầu', '${reservation.startTime.hour}:${reservation.startTime.minute}'),
