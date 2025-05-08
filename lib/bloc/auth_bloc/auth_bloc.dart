@@ -1,6 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:park/data/auth_repository.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -45,6 +44,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<LoginRequested>((event, emit) async {
       emit(AuthLoading());
       try {
+        // Kiểm tra email có tồn tại trong collection user_customer không
+        final userQuery = await FirebaseFirestore.instance
+            .collection('user_customer')
+            .where('email', isEqualTo: event.email)
+            .get();
+
+        if (userQuery.docs.isEmpty) {
+          emit(AuthFailure(error: 'Tài khoản không có quyền truy cập'));
+          return;
+        }
+
+        // Nếu email tồn tại, tiến hành đăng nhập
         UserCredential userCredential = await _firebaseAuth.signInWithEmailAndPassword(
           email: event.email,
           password: event.password,
