@@ -1,3 +1,4 @@
+// 📁 lib/page/home/home_page.dart (Đã hỗ trợ Dark Mode hoàn chỉnh)
 import 'package:flutter/material.dart';
 import 'package:park/data/model/parking_lot.dart';
 import 'package:park/config/colors.dart';
@@ -20,7 +21,7 @@ class _HomePageState extends State<HomePage> {
     final parkingLot = widget.parkingLot;
 
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(parkingLot.name),
         backgroundColor: blueColor,
@@ -88,16 +89,17 @@ class _HomePageState extends State<HomePage> {
               child: Card(
                 elevation: 4,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                color: Theme.of(context).cardColor,
                 child: Padding(
                   padding: const EdgeInsets.all(20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildInfoRow(Icons.location_on, "Địa chỉ", parkingLot.address),
+                      _buildInfoRow(context, Icons.location_on, "Địa chỉ", parkingLot.address),
                       const SizedBox(height: 12),
-                      _buildInfoRow(Icons.local_parking, "Tổng số chỗ", parkingLot.totalSlots.toString()),
+                      _buildInfoRow(context, Icons.local_parking, "Tổng số chỗ", parkingLot.totalSlots.toString()),
                       const SizedBox(height: 12),
-                      _buildInfoRow(Icons.attach_money, "Giá", "${parkingLot.pricePerHour} VND / giờ"),
+                      _buildInfoRow(context, Icons.attach_money, "Giá", "${parkingLot.pricePerHour} VND / giờ"),
                       const SizedBox(height: 24),
                       SizedBox(
                         width: double.infinity,
@@ -116,7 +118,6 @@ class _HomePageState extends State<HomePage> {
                               ),
                             );
                           },
-
                           label: const Text(
                             "ĐẶT CHỖ NGAY",
                             style: TextStyle(fontSize: 16, color: Colors.white),
@@ -134,20 +135,29 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String label, String value) {
+  Widget _buildInfoRow(BuildContext context, IconData icon, String label, String value) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: blueColor),
+        Icon(icon, color: Theme.of(context).colorScheme.primary),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black54)),
+              Text(
+                label,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: Theme.of(context).textTheme.bodyMedium!.color,
+                ),
+              ),
               const SizedBox(height: 4),
-              Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+              Text(
+                value,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
             ],
           ),
         ),

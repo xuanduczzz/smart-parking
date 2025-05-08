@@ -39,7 +39,7 @@ class Reservation {
       'startTime': startTime,
       'endTime': endTime,
       'pricePerHour': pricePerHour,
-      'totalPrice': totalPrice, // ✅ SỬ DỤNG GIÁ ĐÃ TRUYỀN
+      'totalPrice': totalPrice,
       'status': status,
       'qrCode': qrCode,
       'userId': userId,

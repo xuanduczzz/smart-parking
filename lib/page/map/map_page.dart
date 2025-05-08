@@ -1,5 +1,7 @@
+
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -17,6 +19,11 @@ import 'package:park/page/login/login_screen.dart';
 import 'package:park/page/settings/settings_page.dart';
 import 'package:park/data/model/parking_lot.dart';
 import 'package:park/page/search/search_page.dart';
+import 'package:park/page/notifications/notificationpage.dart';
+import 'package:park/data/service/reservation_status_listener.dart';
+import 'package:park/controller/theme_controller.dart';
+
+
 
 class MapPage extends StatefulWidget {
   const MapPage({super.key});
@@ -33,6 +40,9 @@ class _MapPageState extends State<MapPage> {
   @override
   void initState() {
     super.initState();
+
+    ReservationStatusListener().listenToStatusChanges();
+
     _determinePosition().then((position) {
       setState(() {
         _userLocation = LatLng(position.latitude, position.longitude);
@@ -40,6 +50,25 @@ class _MapPageState extends State<MapPage> {
     }).catchError((e) {
       print("Lỗi lấy vị trí: $e");
     });
+
+    ThemeController.themeNotifier.addListener(_applyMapStyle);
+  }
+
+  @override
+  void dispose() {
+    ThemeController.themeNotifier.removeListener(_applyMapStyle);
+    super.dispose();
+  }
+
+  void _applyMapStyle() async {
+    final controller = await _controller.future;
+    final isDark = ThemeController.themeNotifier.value == ThemeMode.dark;
+    if (isDark) {
+      final darkStyle = await rootBundle.loadString('assets/map_style_dark.json');
+      controller.setMapStyle(darkStyle);
+    } else {
+      controller.setMapStyle(null);
+    }
   }
 
   @override
@@ -58,34 +87,27 @@ class _MapPageState extends State<MapPage> {
             ],
           ),
           centerTitle: true,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.notifications, color: Colors.white),
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationPage()));
+              },
+            ),
+          ],
         ),
         drawer: Drawer(
           child: ListView(
             padding: EdgeInsets.zero,
             children: [
               FutureBuilder<DocumentSnapshot>(
-                future: FirebaseFirestore.instance
-                    .collection('user_customer')
-                    .doc(FirebaseAuth.instance.currentUser?.uid)
-                    .get(),
+                future: FirebaseFirestore.instance.collection('user_customer').doc(FirebaseAuth.instance.currentUser?.uid).get(),
                 builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
+                  if (!snapshot.hasData || !snapshot.data!.exists) {
                     return const UserAccountsDrawerHeader(
                       decoration: BoxDecoration(color: blueColor),
-                      accountName: Text('Loading...'),
-                      accountEmail: Text('Loading...'),
-                      currentAccountPicture: CircleAvatar(
-                        backgroundColor: Colors.white,
-                        child: Icon(Icons.person, size: 40, color: blueColor),
-                      ),
-                    );
-                  }
-
-                  if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
-                    return const UserAccountsDrawerHeader(
-                      decoration: BoxDecoration(color: blueColor),
-                      accountName: Text('Error'),
-                      accountEmail: Text('Error loading data'),
+                      accountName: Text('Người dùng'),
+                      accountEmail: Text('user@example.com'),
                       currentAccountPicture: CircleAvatar(
                         backgroundColor: Colors.white,
                         child: Icon(Icons.person, size: 40, color: blueColor),
@@ -94,9 +116,9 @@ class _MapPageState extends State<MapPage> {
                   }
 
                   final userData = snapshot.data!;
-                  final String name = userData['name'] ?? 'Người dùng';
-                  final String email = userData['email'] ?? 'user@example.com';
-                  final String? avatarUrl = userData['avatar'];
+                  final name = userData['name'] ?? 'Người dùng';
+                  final email = userData['email'] ?? 'user@example.com';
+                  final avatarUrl = userData['avatar'];
 
                   return UserAccountsDrawerHeader(
                     decoration: BoxDecoration(color: blueColor),
@@ -105,49 +127,19 @@ class _MapPageState extends State<MapPage> {
                     currentAccountPicture: CircleAvatar(
                       backgroundColor: Colors.white,
                       backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
-                      child: avatarUrl == null
-                          ? Icon(Icons.person, size: 40, color: blueColor)
-                          : null,
+                      child: avatarUrl == null ? Icon(Icons.person, size: 40, color: blueColor) : null,
                     ),
                   );
                 },
               ),
-              ListTile(
-                leading: Icon(Icons.person),
-                title: Text('Hồ sơ cá nhân'),
-                onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileScreen()));
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.book_online),
-                title: Text('Lịch sử đặt chỗ'),
-                onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const ReservationHistoryPage()));
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.car_crash),
-                title: Text('Phương tiện'),
-                onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => VehiclesPage()));
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.settings),
-                title: Text('Cài đặt'),
-                onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsPage()));
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.logout, color: Colors.red),
-                title: Text('Đăng xuất', style: TextStyle(color: Colors.red)),
-                onTap: () async {
-                  await FirebaseAuth.instance.signOut();
-                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => LoginScreen()));
-                },
-              ),
+              ListTile(leading: Icon(Icons.person), title: Text('Hồ sơ cá nhân'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileScreen()))),
+              ListTile(leading: Icon(Icons.book_online), title: Text('Lịch sử đặt chỗ'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ReservationHistoryPage()))),
+              ListTile(leading: Icon(Icons.car_crash), title: Text('Phương tiện'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => VehiclesPage()))),
+              ListTile(leading: Icon(Icons.settings), title: Text('Cài đặt'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsPage()))),
+              ListTile(leading: Icon(Icons.logout, color: Colors.red), title: Text('Đăng xuất', style: TextStyle(color: Colors.red)), onTap: () async {
+                await FirebaseAuth.instance.signOut();
+                Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => LoginScreen()));
+              }),
             ],
           ),
         ),
@@ -155,11 +147,9 @@ class _MapPageState extends State<MapPage> {
             ? const Center(child: CircularProgressIndicator())
             : BlocBuilder<MapBloc, MapState>(
           builder: (context, state) {
-            if (state is MapLoading) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (state is MapError) {
-              return Center(child: Text(state.message));
-            } else if (state is MapLoaded) {
+            if (state is MapLoading) return const Center(child: CircularProgressIndicator());
+            if (state is MapError) return Center(child: Text(state.message));
+            if (state is MapLoaded) {
               Set<Marker> markers = {
                 Marker(
                   markerId: const MarkerId("user_location"),
@@ -169,19 +159,13 @@ class _MapPageState extends State<MapPage> {
                 ),
                 if (_searchMarker != null) _searchMarker!,
               };
-
               for (var lot in state.parkingLots) {
                 markers.add(
                   Marker(
                     markerId: MarkerId(lot.id),
                     position: LatLng(lot.latitude, lot.longitude),
                     icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => HomePage(parkingLot: lot)),
-                      );
-                    },
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => HomePage(parkingLot: lot))),
                   ),
                 );
               }
@@ -195,8 +179,9 @@ class _MapPageState extends State<MapPage> {
                     myLocationButtonEnabled: true,
                     zoomControlsEnabled: false,
                     markers: markers,
-                    onMapCreated: (controller) {
+                    onMapCreated: (controller) async {
                       _controller.complete(controller);
+                      _applyMapStyle();
                     },
                   ),
                   Positioned(
@@ -205,27 +190,17 @@ class _MapPageState extends State<MapPage> {
                     right: 16,
                     child: GestureDetector(
                       onTap: () async {
-                        final result = await Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => SearchPage()),
-                        );
-
+                        final result = await Navigator.push(context, MaterialPageRoute(builder: (_) => SearchPage()));
                         if (result != null && result is ParkingLot) {
                           final controller = await _controller.future;
-                          controller.animateCamera(CameraUpdate.newLatLngZoom(
-                              LatLng(result.latitude, result.longitude), 18));
+                          controller.animateCamera(CameraUpdate.newLatLngZoom(LatLng(result.latitude, result.longitude), 18));
                           setState(() {
                             _searchMarker = Marker(
                               markerId: const MarkerId("search_result"),
                               position: LatLng(result.latitude, result.longitude),
                               icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
                               infoWindow: InfoWindow(title: result.name, snippet: result.address),
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (_) => HomePage(parkingLot: result)),
-                                );
-                              },
+                              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => HomePage(parkingLot: result))),
                             );
                           });
                         }
@@ -235,20 +210,10 @@ class _MapPageState extends State<MapPage> {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
-                            )
-                          ],
+                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 6, offset: const Offset(0, 2))],
                         ),
                         child: const Row(
-                          children: [
-                            Icon(Icons.search, color: Colors.grey),
-                            SizedBox(width: 10),
-                            Text("Tìm kiếm bãi đỗ...", style: TextStyle(color: Colors.grey)),
-                          ],
+                          children: [Icon(Icons.search, color: Colors.grey), SizedBox(width: 10), Text("Tìm kiếm bãi đỗ...", style: TextStyle(color: Colors.grey))],
                         ),
                       ),
                     ),
@@ -256,14 +221,11 @@ class _MapPageState extends State<MapPage> {
                 ],
               );
             }
-
             return const Center(child: Text("Không tải được bản đồ"));
           },
         ),
         floatingActionButton: FloatingActionButton(
-          onPressed: () async {
-            await _getCurrentLocation();
-          },
+          onPressed: () async => await _getCurrentLocation(),
           backgroundColor: blueColor,
           child: const Icon(Icons.my_location, color: Colors.white),
         ),
@@ -278,25 +240,18 @@ class _MapPageState extends State<MapPage> {
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        return Future.error('Quyền vị trí bị từ chối.');
-      }
+      if (permission == LocationPermission.denied) return Future.error('Quyền vị trí bị từ chối.');
     }
-
     if (permission == LocationPermission.deniedForever) {
       return Future.error('Quyền vị trí bị từ chối vĩnh viễn.');
     }
-
     return await Geolocator.getCurrentPosition();
   }
 
   Future<void> _getCurrentLocation() async {
     Position position = await _determinePosition();
     LatLng newLocation = LatLng(position.latitude, position.longitude);
-    setState(() {
-      _userLocation = newLocation;
-    });
-
+    setState(() => _userLocation = newLocation);
     GoogleMapController controller = await _controller.future;
     controller.animateCamera(CameraUpdate.newLatLng(newLocation));
   }

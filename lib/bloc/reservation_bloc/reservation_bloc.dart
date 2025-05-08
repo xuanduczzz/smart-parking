@@ -26,6 +26,14 @@ class ReservationBloc extends Bloc<ReservationEvent, ReservationState> {
         await docRef.update({'qrCode': qrData});
 
         emit(ReservationSuccess());
+        await firestore.collection('notifications').add({
+          'userId': event.reservation.userId,
+          'title': 'Đặt chỗ thành công',
+          'body': 'Bạn đã đặt chỗ tại ${event.reservation.lotName} từ ${event.reservation.startTime}',
+          'isRead': false,
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+
       } catch (e) {
         emit(ReservationError("Lỗi khi lưu đặt chỗ: $e"));
       }

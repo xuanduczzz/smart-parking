@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:park/controller/theme_controller.dart'; // 💡 thêm import
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -18,7 +19,6 @@ class _SettingsPageState extends State<SettingsPage> {
     _loadSettings();
   }
 
-  // Tải cài đặt đã lưu từ SharedPreferences
   _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -27,10 +27,8 @@ class _SettingsPageState extends State<SettingsPage> {
     });
   }
 
-  // Lưu cài đặt mới vào SharedPreferences
-  _saveSettings() async {
+  _saveLanguageSetting() async {
     final prefs = await SharedPreferences.getInstance();
-    prefs.setBool('isDarkMode', isDarkMode);
     prefs.setBool('isVietnamese', isVietnamese);
   }
 
@@ -46,29 +44,17 @@ class _SettingsPageState extends State<SettingsPage> {
               title: const Text('Chế độ tối'),
               value: isDarkMode,
               onChanged: (value) {
-                setState(() {
-                  isDarkMode = value;
-                  _saveSettings();
-                });
+                setState(() => isDarkMode = value);
+                ThemeController.toggleTheme(value); // 💡 cập nhật ngay theme toàn app
               },
             ),
             SwitchListTile(
               title: const Text('Chuyển ngôn ngữ sang tiếng Việt'),
               value: isVietnamese,
               onChanged: (value) {
-                setState(() {
-                  isVietnamese = value;
-                  _saveSettings();
-                });
-                if (value) {
-                  // Cập nhật ngôn ngữ ứng dụng sang Tiếng Việt
-                  // Bạn có thể dùng `Get` hoặc `intl` để thay đổi ngôn ngữ
-                  // Để đơn giản, ở đây chỉ là phần gợi ý
-                  print("Changed to Vietnamese");
-                } else {
-                  // Cập nhật ngôn ngữ ứng dụng sang Tiếng Anh
-                  print("Changed to English");
-                }
+                setState(() => isVietnamese = value);
+                _saveLanguageSetting();
+                // TODO: thêm logic thay đổi ngôn ngữ nếu cần
               },
             ),
           ],
