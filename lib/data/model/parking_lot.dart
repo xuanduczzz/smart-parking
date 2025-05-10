@@ -12,7 +12,7 @@ class ParkingLot {
   final double pricePerHour;
   final List<String> imageUrls;
   final List<ParkingSlot> slots;
-  final String parkingLotMap; // Thêm trường này
+  final List<String> parkingLotMap;
 
   ParkingLot({
     required this.id,
@@ -25,7 +25,7 @@ class ParkingLot {
     required this.pricePerHour,
     required this.imageUrls,
     required this.slots,
-    required this.parkingLotMap, // Thêm trường này
+    required this.parkingLotMap,
   });
 
   factory ParkingLot.fromFirestore(String id, Map<String, dynamic> data) {
@@ -46,7 +46,7 @@ class ParkingLot {
           0,
       imageUrls: imagesRaw.map((e) => e.toString()).toList(),
       slots: [], // Sẽ được gán sau từ Firestore
-      parkingLotMap: data['parkingLotMap'] ?? '', // Đọc từ Firestore
+      parkingLotMap: (data['parkingLotMap'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
     );
   }
 
@@ -61,7 +61,7 @@ class ParkingLot {
     double? pricePerHour,
     List<String>? imageUrls,
     List<ParkingSlot>? slots,
-    String? parkingLotMap, // Thêm trường này vào copyWith
+    List<String>? parkingLotMap,
   }) {
     return ParkingLot(
       id: id ?? this.id,
@@ -74,7 +74,7 @@ class ParkingLot {
       pricePerHour: pricePerHour ?? this.pricePerHour,
       imageUrls: imageUrls ?? this.imageUrls,
       slots: slots ?? this.slots,
-      parkingLotMap: parkingLotMap ?? this.parkingLotMap, // Cập nhật trường này
+      parkingLotMap: parkingLotMap ?? this.parkingLotMap,
     );
   }
 }

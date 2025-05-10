@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Reservation {
+  final String id;
   final String lotId;
   final String lotName;
   final String slotId;
@@ -16,6 +17,7 @@ class Reservation {
   String status; // Changed from 'reserved' to dynamic status values
 
   Reservation({
+    required this.id,
     required this.lotId,
     required this.lotName,
     required this.slotId,
@@ -50,9 +52,9 @@ class Reservation {
     };
   }
 
-
-  factory Reservation.fromMap(Map<String, dynamic> map) {
+  factory Reservation.fromMap(String id, Map<String, dynamic> map) {
     return Reservation(
+      id: id,
       lotId: map['lotId'] ?? '',
       lotName: map['lotName'] ?? '',
       slotId: map['slotId'] ?? '',

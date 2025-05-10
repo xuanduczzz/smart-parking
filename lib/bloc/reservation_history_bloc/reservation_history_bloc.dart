@@ -28,7 +28,7 @@ class ReservationHistoryBloc extends Bloc<ReservationHistoryEvent, ReservationHi
 
         final reservations = snapshot.docs.map((doc) {
           final data = doc.data();
-          return Reservation.fromMap(data);
+          return Reservation.fromMap(doc.id, data);
         }).toList();
 
         emit(ReservationHistoryLoaded(reservations));

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:park/bloc/auth_bloc/auth_bloc.dart';
 import 'package:park/page/map/map_page.dart';
 import 'package:park/page/login/login_screen.dart';
+import 'package:park/config/routes.dart';
 
 class SignUpScreen extends StatefulWidget {
   @override
@@ -99,9 +100,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         const SnackBar(content: Text("Sign Up successful!")),
                       );
                       // Navigate to MapPage after successful sign up
-                      Navigator.pushReplacement(
+                      Navigator.pushReplacementNamed(
                         context,
-                        MaterialPageRoute(builder: (context) => MapPage()),
+                        AppRoutes.map,
                       );
                     }
                   },

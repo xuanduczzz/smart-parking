@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:park/bloc/auth_bloc/auth_bloc.dart';
 import 'package:park/page/map/map_page.dart';
 import 'package:park/page/login/signup_screen.dart';
+import 'package:park/config/routes.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -114,9 +115,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text("Login successful!")),
                       );
-                      Navigator.pushReplacement(
+                      Navigator.pushReplacementNamed(
                         context,
-                        MaterialPageRoute(builder: (context) => MapPage()), // Thay thế bằng widget màn hình bản đồ của bạn
+                        AppRoutes.map,
                       );
                     }
                   },
@@ -154,11 +155,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 20),
                 TextButton(
                   onPressed: () {
-                    Navigator.push(
+                    Navigator.pushNamed(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => SignUpScreen(),
-                      ),
+                      AppRoutes.signup,
                     );
                   },
                   child: const Text(

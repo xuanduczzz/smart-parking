@@ -1,4 +1,3 @@
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -22,8 +21,8 @@ import 'package:park/page/search/search_page.dart';
 import 'package:park/page/notifications/notificationpage.dart';
 import 'package:park/data/service/reservation_status_listener.dart';
 import 'package:park/controller/theme_controller.dart';
-
-
+import 'package:park/page/reviews/my_reviews_screen.dart';
+import 'package:park/config/routes.dart';
 
 class MapPage extends StatefulWidget {
   const MapPage({super.key});
@@ -78,68 +77,180 @@ class _MapPageState extends State<MapPage> {
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: blueColor,
+          elevation: 0,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(
+              bottom: Radius.circular(20),
+            ),
+          ),
           title: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Image.asset("assets/images/white_logo.png", width: 40, height: 40),
               const SizedBox(width: 20),
-              const Text("CAR PARKING", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+              const Text(
+                "CAR PARKING",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 20,
+                ),
+              ),
             ],
           ),
           centerTitle: true,
           actions: [
-            IconButton(
-              icon: const Icon(Icons.notifications, color: Colors.white),
-              onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationPage()));
-              },
+            Container(
+              margin: const EdgeInsets.only(right: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.notifications, color: Colors.white),
+                onPressed: () {
+                  Navigator.pushNamed(context, AppRoutes.notifications);
+                },
+              ),
             ),
           ],
         ),
         drawer: Drawer(
-          child: ListView(
-            padding: EdgeInsets.zero,
+          child: Column(
             children: [
-              FutureBuilder<DocumentSnapshot>(
-                future: FirebaseFirestore.instance.collection('user_customer').doc(FirebaseAuth.instance.currentUser?.uid).get(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData || !snapshot.data!.exists) {
-                    return const UserAccountsDrawerHeader(
-                      decoration: BoxDecoration(color: blueColor),
-                      accountName: Text('Người dùng'),
-                      accountEmail: Text('user@example.com'),
-                      currentAccountPicture: CircleAvatar(
-                        backgroundColor: Colors.white,
-                        child: Icon(Icons.person, size: 40, color: blueColor),
-                      ),
-                    );
-                  }
+              Container(
+                decoration: const BoxDecoration(
+                  color: blueColor,
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(32),
+                    bottomRight: Radius.circular(32),
+                  ),
+                ),
+                child: SafeArea(
+                  child: FutureBuilder<DocumentSnapshot>(
+                    future: FirebaseFirestore.instance.collection('user_customer').doc(FirebaseAuth.instance.currentUser?.uid).get(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData || !snapshot.data!.exists) {
+                        return UserAccountsDrawerHeader(
+                          decoration: const BoxDecoration(
+                            color: Colors.transparent,
+                          ),
+                          accountName: const Text(
+                            'Người dùng',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          accountEmail: const Text(
+                            'user@example.com',
+                            style: TextStyle(color: Colors.white70),
+                          ),
+                          currentAccountPicture: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2),
+                            ),
+                            child: const CircleAvatar(
+                              backgroundColor: Colors.white,
+                              child: Icon(Icons.person, size: 40, color: blueColor),
+                            ),
+                          ),
+                        );
+                      }
 
-                  final userData = snapshot.data!;
-                  final name = userData['name'] ?? 'Người dùng';
-                  final email = userData['email'] ?? 'user@example.com';
-                  final avatarUrl = userData['avatar'];
+                      final userData = snapshot.data!;
+                      final name = userData['name'] ?? 'Người dùng';
+                      final email = userData['email'] ?? 'user@example.com';
+                      final avatarUrl = userData['avatar'];
 
-                  return UserAccountsDrawerHeader(
-                    decoration: BoxDecoration(color: blueColor),
-                    accountName: Text(name),
-                    accountEmail: Text(email),
-                    currentAccountPicture: CircleAvatar(
-                      backgroundColor: Colors.white,
-                      backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
-                      child: avatarUrl == null ? Icon(Icons.person, size: 40, color: blueColor) : null,
-                    ),
-                  );
-                },
+                      return UserAccountsDrawerHeader(
+                        decoration: const BoxDecoration(
+                          color: Colors.transparent,
+                        ),
+                        accountName: Text(
+                          name,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        accountEmail: Text(
+                          email,
+                          style: const TextStyle(color: Colors.white70),
+                        ),
+                        currentAccountPicture: Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          child: CircleAvatar(
+                            backgroundColor: Colors.white,
+                            backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
+                            child: avatarUrl == null ? const Icon(Icons.person, size: 40, color: blueColor) : null,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
               ),
-              ListTile(leading: Icon(Icons.person), title: Text('Hồ sơ cá nhân'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileScreen()))),
-              ListTile(leading: Icon(Icons.book_online), title: Text('Lịch sử đặt chỗ'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ReservationHistoryPage()))),
-              ListTile(leading: Icon(Icons.car_crash), title: Text('Phương tiện'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => VehiclesPage()))),
-              ListTile(leading: Icon(Icons.settings), title: Text('Cài đặt'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsPage()))),
-              ListTile(leading: Icon(Icons.logout, color: Colors.red), title: Text('Đăng xuất', style: TextStyle(color: Colors.red)), onTap: () async {
-                await FirebaseAuth.instance.signOut();
-                Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => LoginScreen()));
-              }),
+              Expanded(
+                child: Container(
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  child: ListView(
+                    padding: EdgeInsets.zero,
+                    children: [
+                      _buildDrawerItem(
+                        icon: Icons.person,
+                        title: 'Hồ sơ cá nhân',
+                        onTap: () => Navigator.pushNamed(context, AppRoutes.profile),
+                        textColor: Theme.of(context).textTheme.bodyLarge?.color,
+                        iconColor: blueColor,
+                      ),
+                      _buildDrawerItem(
+                        icon: Icons.book_online,
+                        title: 'Lịch sử đặt chỗ',
+                        onTap: () => Navigator.pushNamed(context, AppRoutes.reservationHistory),
+                        textColor: Theme.of(context).textTheme.bodyLarge?.color,
+                        iconColor: blueColor,
+                      ),
+                      _buildDrawerItem(
+                        icon: Icons.rate_review,
+                        title: 'Đánh giá của tôi',
+                        onTap: () => Navigator.pushNamed(context, AppRoutes.myReviews),
+                        textColor: Theme.of(context).textTheme.bodyLarge?.color,
+                        iconColor: blueColor,
+                      ),
+                      _buildDrawerItem(
+                        icon: Icons.car_crash,
+                        title: 'Phương tiện',
+                        onTap: () => Navigator.pushNamed(context, AppRoutes.vehicles),
+                        textColor: Theme.of(context).textTheme.bodyLarge?.color,
+                        iconColor: blueColor,
+                      ),
+                      _buildDrawerItem(
+                        icon: Icons.settings,
+                        title: 'Cài đặt',
+                        onTap: () => Navigator.pushNamed(context, AppRoutes.settings),
+                        textColor: Theme.of(context).textTheme.bodyLarge?.color,
+                        iconColor: blueColor,
+                      ),
+                      Divider(color: Theme.of(context).dividerColor.withOpacity(0.2)),
+                      _buildDrawerItem(
+                        icon: Icons.logout,
+                        title: 'Đăng xuất',
+                        textColor: Colors.red,
+                        iconColor: Colors.red,
+                        onTap: () async {
+                          await FirebaseAuth.instance.signOut();
+                          Navigator.pushReplacementNamed(context, AppRoutes.login);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -165,7 +276,11 @@ class _MapPageState extends State<MapPage> {
                     markerId: MarkerId(lot.id),
                     position: LatLng(lot.latitude, lot.longitude),
                     icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => HomePage(parkingLot: lot))),
+                    onTap: () => Navigator.pushNamed(
+                      context,
+                      AppRoutes.home,
+                      arguments: {'parkingLot': lot},
+                    ),
                   ),
                 );
               }
@@ -190,7 +305,7 @@ class _MapPageState extends State<MapPage> {
                     right: 16,
                     child: GestureDetector(
                       onTap: () async {
-                        final result = await Navigator.push(context, MaterialPageRoute(builder: (_) => SearchPage()));
+                        final result = await Navigator.pushNamed(context, AppRoutes.search);
                         if (result != null && result is ParkingLot) {
                           final controller = await _controller.future;
                           controller.animateCamera(CameraUpdate.newLatLngZoom(LatLng(result.latitude, result.longitude), 18));
@@ -200,7 +315,11 @@ class _MapPageState extends State<MapPage> {
                               position: LatLng(result.latitude, result.longitude),
                               icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
                               infoWindow: InfoWindow(title: result.name, snippet: result.address),
-                              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => HomePage(parkingLot: result))),
+                              onTap: () => Navigator.pushNamed(
+                                context,
+                                AppRoutes.home,
+                                arguments: {'parkingLot': result},
+                              ),
                             );
                           });
                         }
@@ -254,5 +373,33 @@ class _MapPageState extends State<MapPage> {
     setState(() => _userLocation = newLocation);
     GoogleMapController controller = await _controller.future;
     controller.animateCamera(CameraUpdate.newLatLng(newLocation));
+  }
+
+  Widget _buildDrawerItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+    Color? textColor,
+    Color? iconColor,
+  }) {
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: iconColor ?? Theme.of(context).iconTheme.color,
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          color: textColor ?? Theme.of(context).textTheme.bodyLarge?.color,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      onTap: onTap,
+      hoverColor: Theme.of(context).colorScheme.primary.withOpacity(0.07),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+    );
   }
 }

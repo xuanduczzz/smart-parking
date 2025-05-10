@@ -89,14 +89,20 @@ class _BookingSlotPageState extends State<BookingSlotPage> {
             const SizedBox(height: 12),
 
             // Hiển thị hình ảnh bãi đỗ xe (sơ đồ)
-            if (widget.parkingLot.imageUrls.isNotEmpty)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Image.network(
-                  widget.parkingLot.parkingLotMap, // Sử dụng đường dẫn hình ảnh của sơ đồ bãi đỗ xe
-                  height: 180,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
+            if (widget.parkingLot.parkingLotMap.isNotEmpty)
+              SizedBox(
+                height: 180,
+                child: PageView.builder(
+                  itemCount: widget.parkingLot.parkingLotMap.length,
+                  itemBuilder: (context, index) {
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.network(
+                        widget.parkingLot.parkingLotMap[index],
+                        fit: BoxFit.cover,
+                      ),
+                    );
+                  },
                 ),
               ),
             const SizedBox(height: 12),

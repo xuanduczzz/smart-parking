@@ -8,6 +8,7 @@ import 'package:park/controller/theme_controller.dart'; // 💡 Controller quả
 import 'package:park/page/map/map_page.dart';
 import 'package:park/page/login/login_screen.dart';
 import 'package:park/page/settings/settings_page.dart';
+import 'package:park/config/routes.dart';
 
 import 'bloc/auth_bloc/auth_bloc.dart';
 import 'bloc/reservation_bloc/reservation_bloc.dart';
@@ -29,12 +30,14 @@ void main() async {
         BlocProvider(create: (_) => VoucherBloc(FirebaseFirestore.instance)),
         BlocProvider(create: (_) => NotificationBloc(FirebaseFirestore.instance)),
       ],
-      child: MyApp(),
+      child: const MyApp(),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<ThemeMode>(
@@ -45,6 +48,7 @@ class MyApp extends StatelessWidget {
           theme: ThemeData.light(),
           darkTheme: ThemeData.dark(),
           themeMode: mode,
+          routes: AppRoutes.getRoutes(),
           home: StreamBuilder<User?>(
             stream: FirebaseAuth.instance.authStateChanges(),
             builder: (context, snapshot) {
@@ -54,7 +58,7 @@ class MyApp extends StatelessWidget {
               if (snapshot.hasError) {
                 return Center(child: Text('Error: ${snapshot.error}'));
               }
-              return snapshot.hasData ? MapPage() : LoginScreen();
+              return snapshot.hasData ? const MapPage() : LoginScreen();
             },
           ),
         );
