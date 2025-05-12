@@ -12,7 +12,7 @@ import 'package:park/page/notifications/notificationpage.dart';
 import 'package:park/page/reviews/my_reviews_screen.dart';
 import 'package:park/page/booking/booking_page.dart';
 import 'package:park/page/booking/booking_slot_page.dart';
-import 'package:park/presentation/screens/review_screen.dart';
+import 'package:park/page/reviews/review_screen.dart';
 import 'package:park/data/model/parking_lot.dart';
 
 class AppRoutes {

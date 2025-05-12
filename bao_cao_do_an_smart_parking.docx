@@ -1,0 +1,547 @@
+# BÁO CÁO ĐỒ ÁN TỐT NGHIỆP
+## ỨNG DỤNG QUẢN LÝ BÃI ĐỖ XE THÔNG MINH (SMART PARKING)
+
+### LỜI CẢM ƠN
+[Phần này sẽ được viết sau khi hoàn thành đồ án]
+
+### MỤC LỤC
+[Phần này sẽ được tự động tạo bởi Word]
+
+### DANH MỤC CÁC TỪ VIẾT TẮT
+- API: Application Programming Interface
+- UI: User Interface
+- UX: User Experience
+- GPS: Global Positioning System
+- QR: Quick Response
+- NFC: Near Field Communication
+
+### DANH MỤC BẢNG BIỂU
+[Bảng 1: Danh sách các chức năng chính của hệ thống]
+[Bảng 2: So sánh các công nghệ quản lý bãi đỗ xe]
+[Bảng 3: Kết quả thử nghiệm hệ thống]
+
+### DANH MỤC HÌNH ẢNH
+[Hình 1: Kiến trúc tổng thể hệ thống]
+[Hình 2: Sơ đồ luồng xử lý đăng nhập]
+[Hình 3: Giao diện người dùng chính]
+[Hình 4: Sơ đồ cơ sở dữ liệu]
+
+### MỞ ĐẦU
+
+Trong bối cảnh đô thị hóa nhanh chóng và sự phát triển mạnh mẽ của công nghệ số, việc quản lý bãi đỗ xe đang trở thành một thách thức lớn đối với các thành phố hiện đại. Theo báo cáo của Bộ Giao thông Vận tải năm 2023, số lượng phương tiện cá nhân tại các đô thị lớn đang tăng trưởng với tốc độ trung bình 10-15% mỗi năm, trong khi diện tích đất dành cho bãi đỗ xe chỉ tăng khoảng 2-3%. Sự chênh lệch này đã dẫn đến nhiều vấn đề nghiêm trọng trong quản lý bãi đỗ xe, ảnh hưởng trực tiếp đến chất lượng cuộc sống của người dân và hiệu quả hoạt động của các đô thị.
+
+#### 1. Lý do chọn đề tài
+
+##### 1.1. Thực trạng và thách thức
+Hiện nay, việc quản lý bãi đỗ xe tại các đô thị lớn đang phải đối mặt với nhiều thách thức:
+
+1. **Vấn đề về không gian đỗ xe:**
+   - Thiếu chỗ đỗ xe tại các khu vực đông dân cư, đặc biệt là các trung tâm thương mại, bệnh viện, và trường học
+   - Khó khăn trong việc tìm kiếm chỗ đỗ xe phù hợp, dẫn đến việc người dùng phải mất nhiều thời gian di chuyển
+   - Lãng phí thời gian tìm kiếm chỗ đỗ, ước tính trung bình mỗi người mất khoảng 20-30 phút mỗi ngày để tìm chỗ đỗ xe
+   - Tình trạng đỗ xe không đúng quy định, gây cản trở giao thông và mất mỹ quan đô thị
+
+2. **Vấn đề về quản lý:**
+   - Khó khăn trong việc theo dõi trạng thái bãi đỗ xe real-time, dẫn đến việc không biết chính xác số lượng chỗ trống
+   - Thiếu hệ thống đặt chỗ trước, gây khó khăn cho người dùng trong việc lên kế hoạch di chuyển
+   - Quản lý thanh toán thủ công, dễ xảy ra sai sót và gian lận
+   - Không có hệ thống thống kê, báo cáo hiệu quả cho chủ bãi đỗ xe
+   - Thiếu cơ chế giám sát và xử lý vi phạm
+
+3. **Vấn đề về trải nghiệm người dùng:**
+   - Thiếu thông tin real-time về tình trạng bãi đỗ xe, giá cả, và các quy định
+   - Không có hệ thống thanh toán tự động, gây bất tiện cho người dùng
+   - Thiếu tính năng đặt chỗ trước, dẫn đến tình trạng không có chỗ đỗ khi cần
+   - Không có hệ thống thông báo và cảnh báo về thời gian đỗ xe
+   - Giao diện quản lý phức tạp và khó sử dụng
+
+##### 1.2. Xu hướng phát triển
+Trong bối cảnh chuyển đổi số và phát triển thành phố thông minh, các giải pháp quản lý bãi đỗ xe thông minh đang trở thành xu hướng tất yếu:
+
+1. **Công nghệ mới:**
+   - Sự phát triển của IoT và cảm biến thông minh
+   - Ứng dụng di động và thanh toán điện tử
+   - Trí tuệ nhân tạo và phân tích dữ liệu
+   - Điện toán đám mây và bảo mật
+
+2. **Nhu cầu thị trường:**
+   - Tăng cường trải nghiệm người dùng
+   - Tối ưu hóa quản lý và vận hành
+   - Giảm thiểu chi phí và nhân lực
+   - Tăng cường bảo mật và an toàn
+
+3. **Chính sách phát triển:**
+   - Định hướng phát triển thành phố thông minh
+   - Khuyến khích ứng dụng công nghệ mới
+   - Tăng cường quản lý giao thông đô thị
+   - Bảo vệ môi trường và phát triển bền vững
+
+#### 2. Mục tiêu của đồ án
+
+##### 2.1. Mục tiêu tổng quát
+Đồ án "Ứng dụng quản lý bãi đỗ xe thông minh (Smart Parking)" được thực hiện nhằm xây dựng một giải pháp toàn diện, ứng dụng công nghệ hiện đại để giải quyết các vấn đề trong quản lý bãi đỗ xe, mang lại lợi ích cho cả người dùng và nhà quản lý.
+
+##### 2.2. Mục tiêu cụ thể
+1. **Phát triển ứng dụng:**
+   - Xây dựng ứng dụng di động đa nền tảng sử dụng Flutter
+   - Tích hợp các tính năng quản lý và thanh toán tự động
+   - Cung cấp giao diện người dùng thân thiện và dễ sử dụng
+
+2. **Tính năng cốt lõi:**
+   - Hệ thống xác thực và quản lý người dùng an toàn
+   - Tìm kiếm và đặt chỗ đỗ xe thông minh
+   - Thanh toán tự động đa phương thức
+   - Quản lý và thống kê hiệu quả
+
+3. **Tối ưu hóa:**
+   - Tối ưu hóa hiệu suất và trải nghiệm người dùng
+   - Đảm bảo tính bảo mật và an toàn
+   - Khả năng mở rộng và tích hợp
+   - Chi phí vận hành thấp
+
+#### 3. Phạm vi nghiên cứu
+
+##### 3.1. Phạm vi công nghệ
+1. **Công nghệ phát triển:**
+   - Flutter Framework cho phát triển ứng dụng di động
+   - Firebase cho xác thực và lưu trữ dữ liệu
+   - Google Maps API cho tính năng bản đồ
+   - Các API thanh toán điện tử
+
+2. **Công nghệ tích hợp:**
+   - Hệ thống xác thực đa phương thức
+   - Công nghệ định vị và bản đồ
+   - Hệ thống thanh toán điện tử
+   - Công nghệ thông báo real-time
+
+##### 3.2. Phạm vi chức năng
+1. **Quản lý người dùng:**
+   - Đăng ký và xác thực
+   - Quản lý thông tin cá nhân
+   - Quản lý phương tiện
+   - Lịch sử giao dịch
+
+2. **Quản lý bãi đỗ xe:**
+   - Tìm kiếm và đặt chỗ
+   - Thanh toán tự động
+   - Thông báo real-time
+   - Báo cáo và thống kê
+
+##### 3.3. Phạm vi người dùng
+1. **Người dùng cá nhân:**
+   - Tìm kiếm và đặt chỗ
+   - Thanh toán và quản lý
+   - Nhận thông báo
+   - Đánh giá và phản hồi
+
+2. **Chủ bãi đỗ xe:**
+   - Quản lý bãi đỗ
+   - Theo dõi doanh thu
+   - Thống kê và báo cáo
+   - Quản lý người dùng
+
+3. **Quản trị viên:**
+   - Quản lý hệ thống
+   - Xử lý sự cố
+   - Báo cáo tổng hợp
+   - Cấu hình hệ thống
+
+#### 4. Phương pháp nghiên cứu
+
+##### 4.1. Nghiên cứu tài liệu
+1. **Tài liệu công nghệ:**
+   - Tài liệu chính thức của Flutter
+   - Tài liệu Firebase và các dịch vụ
+   - Tài liệu về các API tích hợp
+   - Các best practices trong phát triển
+
+2. **Nghiên cứu thị trường:**
+   - Phân tích các giải pháp hiện có
+   - Nghiên cứu nhu cầu người dùng
+   - Đánh giá xu hướng phát triển
+   - Phân tích đối thủ cạnh tranh
+
+##### 4.2. Phân tích và thiết kế
+1. **Phân tích yêu cầu:**
+   - Thu thập yêu cầu người dùng
+   - Phân tích tính khả thi
+   - Xác định phạm vi dự án
+   - Lập kế hoạch triển khai
+
+2. **Thiết kế hệ thống:**
+   - Thiết kế kiến trúc
+   - Thiết kế cơ sở dữ liệu
+   - Thiết kế giao diện
+   - Thiết kế luồng xử lý
+
+##### 4.3. Phát triển và triển khai
+1. **Phát triển:**
+   - Phát triển theo mô hình Agile
+   - Chia nhỏ các sprint
+   - Code review và testing
+   - Tích hợp liên tục
+
+2. **Triển khai:**
+   - Cài đặt môi trường
+   - Triển khai từng module
+   - Kiểm thử hệ thống
+   - Đánh giá hiệu suất
+
+##### 4.4. Đánh giá và cải tiến
+1. **Đánh giá:**
+   - Thu thập phản hồi
+   - Đánh giá hiệu suất
+   - Phân tích lỗi
+   - Đo lường mức độ hài lòng
+
+2. **Cải tiến:**
+   - Tối ưu hóa code
+   - Cải thiện hiệu suất
+   - Nâng cao trải nghiệm
+   - Bổ sung tính năng
+
+#### 5. Cấu trúc đồ án
+Đồ án được chia thành 4 chương chính, mỗi chương tập trung vào một khía cạnh quan trọng của dự án:
+
+1. **Chương 1: Tổng quan về hệ thống quản lý bãi đỗ xe thông minh**
+   - Giới thiệu về hệ thống và các vấn đề cần giải quyết
+   - Phân tích các công nghệ hiện có trên thị trường
+   - Chi tiết về các yêu cầu hệ thống
+
+2. **Chương 2: Phân tích và thiết kế hệ thống**
+   - Mô tả kiến trúc tổng thể của hệ thống
+   - Thiết kế chi tiết cơ sở dữ liệu
+   - Thiết kế giao diện người dùng và luồng xử lý
+
+3. **Chương 3: Công nghệ và công cụ phát triển**
+   - Giới thiệu về Flutter Framework và các tính năng
+   - Chi tiết về Firebase và các dịch vụ sử dụng
+   - Mô tả các thư viện và công cụ hỗ trợ
+
+4. **Chương 4: Triển khai và đánh giá**
+   - Quá trình phát triển và các giai đoạn
+   - Kết quả đạt được và các vấn đề gặp phải
+   - Đánh giá tổng quan và hướng phát triển
+
+### CHƯƠNG 1: TỔNG QUAN VỀ HỆ THỐNG QUẢN LÝ BÃI ĐỖ XE THÔNG MINH
+
+#### 1.1. Giới thiệu về hệ thống quản lý bãi đỗ xe thông minh
+
+##### 1.1.1. Khái niệm và đặc điểm
+Hệ thống quản lý bãi đỗ xe thông minh (Smart Parking System) là một giải pháp công nghệ hiện đại, kết hợp giữa phần cứng và phần mềm để tự động hóa quá trình quản lý bãi đỗ xe. Hệ thống này được thiết kế để giải quyết các vấn đề phức tạp trong quản lý bãi đỗ xe thông qua việc ứng dụng các công nghệ tiên tiến như IoT, AI, và các giải pháp di động.
+
+Các đặc điểm chính của hệ thống bao gồm:
+- Tự động hóa quá trình quản lý bãi đỗ xe
+- Cung cấp thông tin real-time về tình trạng bãi đỗ
+- Tích hợp nhiều phương thức thanh toán
+- Hỗ trợ đặt chỗ trước
+- Cung cấp giao diện quản lý trực quan
+
+##### 1.1.2. Lợi ích của hệ thống
+1. **Đối với người dùng:**
+   - Tiết kiệm thời gian tìm kiếm chỗ đỗ xe
+   - Giảm thiểu căng thẳng khi tìm chỗ đỗ
+   - Thanh toán nhanh chóng và tiện lợi
+   - Có thể đặt chỗ trước khi di chuyển
+   - Nhận thông báo real-time về tình trạng đỗ xe
+
+2. **Đối với chủ bãi đỗ xe:**
+   - Tối ưu hóa việc sử dụng không gian
+   - Giảm chi phí nhân công
+   - Tăng doanh thu nhờ quản lý hiệu quả
+   - Có báo cáo thống kê chi tiết
+   - Giảm thiểu gian lận trong thanh toán
+
+3. **Đối với xã hội:**
+   - Giảm ùn tắc giao thông
+   - Giảm ô nhiễm môi trường
+   - Góp phần xây dựng thành phố thông minh
+   - Nâng cao chất lượng cuộc sống
+
+#### 1.2. Các công nghệ hiện có trên thị trường
+
+##### 1.2.1. Hệ thống quản lý bãi đỗ xe truyền thống
+1. **Đặc điểm:**
+   - Sử dụng nhân viên quản lý trực tiếp
+   - Thanh toán bằng tiền mặt
+   - Không có hệ thống đặt chỗ
+   - Quản lý thủ công
+
+2. **Ưu điểm:**
+   - Chi phí đầu tư ban đầu thấp
+   - Dễ triển khai
+   - Không yêu cầu kỹ năng công nghệ cao
+
+3. **Nhược điểm:**
+   - Tốn nhiều nhân lực
+   - Dễ xảy ra sai sót
+   - Không có báo cáo thống kê
+   - Khó mở rộng quy mô
+
+##### 1.2.2. Giải pháp sử dụng cảm biến IoT
+1. **Công nghệ sử dụng:**
+   - Cảm biến chuyển động
+   - Cảm biến trọng lượng
+   - Camera giám sát
+   - Hệ thống điều khiển tự động
+
+2. **Ưu điểm:**
+   - Độ chính xác cao
+   - Hoạt động 24/7
+   - Dữ liệu real-time
+   - Tự động hóa cao
+
+3. **Nhược điểm:**
+   - Chi phí đầu tư cao
+   - Yêu cầu bảo trì thường xuyên
+   - Phụ thuộc vào cơ sở hạ tầng
+
+##### 1.2.3. Ứng dụng di động quản lý bãi đỗ xe
+1. **Tính năng chính:**
+   - Tìm kiếm bãi đỗ xe
+   - Đặt chỗ trước
+   - Thanh toán điện tử
+   - Thông báo real-time
+
+2. **Ưu điểm:**
+   - Tiện lợi cho người dùng
+   - Dễ dàng cập nhật
+   - Chi phí vận hành thấp
+   - Khả năng mở rộng cao
+
+3. **Nhược điểm:**
+   - Yêu cầu kết nối internet
+   - Phụ thuộc vào thiết bị di động
+   - Cần đào tạo người dùng
+
+##### 1.2.4. Hệ thống thanh toán tự động
+1. **Phương thức thanh toán:**
+   - Thẻ tín dụng/ghi nợ
+   - Ví điện tử
+   - QR Code
+   - NFC
+
+2. **Ưu điểm:**
+   - Thanh toán nhanh chóng
+   - An toàn và bảo mật
+   - Không cần tiền mặt
+   - Dễ dàng theo dõi
+
+3. **Nhược điểm:**
+   - Yêu cầu cơ sở hạ tầng
+   - Phụ thuộc vào nhà cung cấp dịch vụ
+   - Chi phí giao dịch
+
+#### 1.3. Phân tích yêu cầu hệ thống
+
+##### 1.3.1. Yêu cầu chức năng
+1. **Quản lý người dùng:**
+   - Đăng ký và đăng nhập
+   - Quản lý thông tin cá nhân
+   - Xác thực và phân quyền
+   - Quản lý phương tiện
+
+2. **Quản lý bãi đỗ xe:**
+   - Thêm/sửa/xóa bãi đỗ xe
+   - Quản lý vị trí đỗ xe
+   - Cập nhật trạng thái
+   - Định giá và thanh toán
+
+3. **Tìm kiếm và đặt chỗ:**
+   - Tìm kiếm theo vị trí
+   - Lọc theo tiêu chí
+   - Đặt chỗ trước
+   - Hủy đặt chỗ
+
+4. **Thanh toán:**
+   - Nhiều phương thức thanh toán
+   - Tạo hóa đơn
+   - Lịch sử giao dịch
+   - Báo cáo doanh thu
+
+5. **Thông báo:**
+   - Thông báo real-time
+   - Cảnh báo thời gian
+   - Thông báo khuyến mãi
+   - Báo cáo sự cố
+
+##### 1.3.2. Yêu cầu phi chức năng
+1. **Hiệu suất:**
+   - Thời gian phản hồi < 2 giây
+   - Hỗ trợ nhiều người dùng đồng thời
+   - Tối ưu hóa băng thông
+   - Xử lý dữ liệu real-time
+
+2. **Bảo mật:**
+   - Mã hóa dữ liệu
+   - Xác thực hai yếu tố
+   - Bảo vệ thông tin cá nhân
+   - Kiểm soát truy cập
+
+3. **Khả năng mở rộng:**
+   - Kiến trúc module
+   - Dễ dàng thêm tính năng
+   - Hỗ trợ đa nền tảng
+   - Tích hợp API
+
+4. **Độ tin cậy:**
+   - Sao lưu dữ liệu
+   - Khôi phục hệ thống
+   - Xử lý lỗi
+   - Giám sát hệ thống
+
+#### 1.4. Các chức năng chính của hệ thống
+
+##### 1.4.1. Quản lý người dùng
+1. **Đăng ký và xác thực:**
+   - Đăng ký bằng email/số điện thoại
+   - Xác thực OTP
+   - Đăng nhập bằng mạng xã hội
+   - Quản lý phiên đăng nhập
+
+2. **Quản lý thông tin:**
+   - Cập nhật thông tin cá nhân
+   - Quản lý phương tiện
+   - Lịch sử đỗ xe
+   - Cài đặt thông báo
+
+##### 1.4.2. Quản lý bãi đỗ xe
+1. **Thông tin bãi đỗ:**
+   - Vị trí và bản đồ
+   - Giá cả và quy định
+   - Trạng thái hiện tại
+   - Đánh giá và phản hồi
+
+2. **Quản lý vị trí:**
+   - Phân loại vị trí
+   - Trạng thái sử dụng
+   - Lịch sử sử dụng
+   - Bảo trì và sửa chữa
+
+##### 1.4.3. Đặt chỗ và thanh toán
+1. **Quy trình đặt chỗ:**
+   - Tìm kiếm vị trí
+   - Kiểm tra tính khả dụng
+   - Xác nhận đặt chỗ
+   - Hủy đặt chỗ
+
+2. **Hệ thống thanh toán:**
+   - Nhiều phương thức thanh toán
+   - Tạo hóa đơn
+   - Xác nhận thanh toán
+   - Hoàn tiền
+
+##### 1.4.4. Báo cáo và thống kê
+1. **Báo cáo doanh thu:**
+   - Theo ngày/tháng/năm
+   - Theo loại phương tiện
+   - Theo vị trí
+   - Xuất báo cáo
+
+2. **Thống kê sử dụng:**
+   - Tỷ lệ sử dụng
+   - Thời gian đỗ trung bình
+   - Phân tích xu hướng
+   - Dự báo nhu cầu
+
+### CHƯƠNG 2: PHÂN TÍCH VÀ THIẾT KẾ HỆ THỐNG
+
+#### 2.1. Kiến trúc tổng thể
+- Kiến trúc client-server
+- Sử dụng Firebase làm backend
+- Mô hình MVC trong Flutter
+
+#### 2.2. Thiết kế cơ sở dữ liệu
+- Cấu trúc database
+- Các collection chính
+- Quan hệ giữa các collection
+
+#### 2.3. Thiết kế giao diện người dùng
+- Nguyên tắc thiết kế UI/UX
+- Các màn hình chính
+- Luồng tương tác người dùng
+
+#### 2.4. Các luồng xử lý chính
+- Luồng đăng nhập/đăng ký
+- Luồng đặt chỗ đỗ xe
+- Luồng thanh toán
+- Luồng quản lý tài khoản
+
+#### 2.5. Bảo mật và xác thực
+- Xác thực người dùng
+- Phân quyền
+- Mã hóa dữ liệu
+
+### CHƯƠNG 3: CÔNG NGHỆ VÀ CÔNG CỤ PHÁT TRIỂN
+
+#### 3.1. Flutter Framework
+- Giới thiệu về Flutter
+- Ưu điểm của Flutter
+- Cấu trúc project Flutter
+
+#### 3.2. Firebase Authentication
+- Tích hợp Firebase Auth
+- Các phương thức xác thực
+- Quản lý phiên đăng nhập
+
+#### 3.3. Cloud Firestore
+- Cấu trúc database
+- Các thao tác CRUD
+- Quy tắc bảo mật
+
+#### 3.4. Các thư viện và công cụ hỗ trợ
+- Provider cho state management
+- GetX cho navigation
+- Các package hỗ trợ khác
+
+### CHƯƠNG 4: TRIỂN KHAI VÀ ĐÁNH GIÁ
+
+#### 4.1. Quá trình phát triển
+- Các giai đoạn phát triển
+- Công cụ sử dụng
+- Phương pháp quản lý dự án
+
+#### 4.2. Các chức năng đã triển khai
+- Chi tiết các chức năng
+- Kết quả đạt được
+- Các vấn đề gặp phải
+
+#### 4.3. Giao diện người dùng
+- Screenshot các màn hình
+- Đánh giá UX
+- Phản hồi người dùng
+
+#### 4.4. Đánh giá và thử nghiệm
+- Phương pháp kiểm thử
+- Kết quả kiểm thử
+- Đánh giá hiệu suất
+
+#### 4.5. Hướng phát triển tiếp theo
+- Các tính năng dự kiến
+- Cải tiến hệ thống
+- Kế hoạch mở rộng
+
+### KẾT LUẬN VÀ KIẾN NGHỊ
+
+#### Kết luận
+- Tóm tắt kết quả đạt được
+- Đánh giá tổng quan
+- Những đóng góp của đồ án
+
+#### Kiến nghị
+- Hướng phát triển
+- Đề xuất cải tiến
+- Kế hoạch triển khai
+
+### DANH MỤC TÀI LIỆU THAM KHẢO
+1. Flutter Documentation (2024)
+2. Firebase Documentation (2024)
+3. Smart Parking Systems: A Review (2023)
+4. Mobile App Development Best Practices (2024)
+5. User Interface Design Guidelines (2024)
+
+### PHỤ LỤC
+- Mã nguồn chương trình
+- Hướng dẫn cài đặt
+- Biểu mẫu đánh giá
+- Tài liệu kỹ thuật bổ sung 

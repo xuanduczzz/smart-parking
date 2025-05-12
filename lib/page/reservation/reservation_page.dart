@@ -252,8 +252,6 @@ class _ReservationPageState extends State<ReservationPage> {
                         phoneNumber: _phoneController.text,
                       );
 
-                      // Sử dụng reservationRef để lưu dữ liệu
-                      await reservationRef.set(reservation.toMap());
 
                       showConfirmationDialog(context: context, reservation: reservation);
                     } else {

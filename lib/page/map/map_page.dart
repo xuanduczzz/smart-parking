@@ -1,27 +1,17 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:park/config/colors.dart';
 import 'package:park/data/service/parking_service.dart';
 import 'package:park/bloc/map_bloc/map_bloc.dart';
-import 'package:park/page/home/home_page.dart';
-import 'package:park/page/reservation_history/reservation_history_page.dart';
-import 'package:park/page/profile/profile_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:park/page/vehicle/vehicle_page.dart';
-import 'package:park/page/login/login_screen.dart';
-import 'package:park/page/settings/settings_page.dart';
 import 'package:park/data/model/parking_lot.dart';
-import 'package:park/page/search/search_page.dart';
-import 'package:park/page/notifications/notificationpage.dart';
 import 'package:park/data/service/reservation_status_listener.dart';
 import 'package:park/controller/theme_controller.dart';
-import 'package:park/page/reviews/my_reviews_screen.dart';
 import 'package:park/config/routes.dart';
 
 class MapPage extends StatefulWidget {
