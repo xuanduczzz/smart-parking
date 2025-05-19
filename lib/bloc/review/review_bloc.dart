@@ -17,10 +17,25 @@ class ReviewBloc extends Bloc<ReviewEvent, ReviewState> {
     emit(ReviewLoading());
 
     try {
+      // Lấy thông tin reservation để lấy lotId
+      final reservationDoc = await FirebaseFirestore.instance
+          .collection('reservations')
+          .doc(event.reservationId)
+          .get();
+      
+      if (!reservationDoc.exists) {
+        emit(ReviewError("Không tìm thấy thông tin đặt chỗ"));
+        return;
+      }
+
+      final reservationData = reservationDoc.data()!;
+      final lotId = reservationData['lotId'] as String;
+
       // Tạo review trước
       final review = Review(
         id: '', // Will be set by Firestore
         reservationId: event.reservationId,
+        lotId: lotId,
         review: event.review,
         star: event.star,
         uid: event.uid,
@@ -42,6 +57,7 @@ class ReviewBloc extends Bloc<ReviewEvent, ReviewState> {
       final updatedReview = Review(
         id: reviewRef.id,
         reservationId: review.reservationId,
+        lotId: review.lotId,
         review: review.review,
         star: review.star,
         uid: review.uid,
@@ -51,6 +67,15 @@ class ReviewBloc extends Bloc<ReviewEvent, ReviewState> {
 
       // Lưu review vào Firestore
       await reviewRef.set(updatedReview.toMap());
+
+      // Cập nhật trạng thái reservation sang complete
+      await FirebaseFirestore.instance
+          .collection('reservations')
+          .doc(event.reservationId)
+          .update({
+        'status': 'complete',
+        'completedAt': FieldValue.serverTimestamp(),
+      });
 
       emit(ReviewSuccess());
     } catch (e) {

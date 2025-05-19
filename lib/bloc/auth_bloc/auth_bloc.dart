@@ -71,5 +71,28 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       await _firebaseAuth.signOut();
       emit(AuthInitial());
     });
+
+    // Đăng ký sự kiện ResetPasswordRequested
+    on<ResetPasswordRequested>((event, emit) async {
+      emit(AuthLoading());
+      try {
+        // Kiểm tra email có tồn tại trong collection user_customer không
+        final userQuery = await FirebaseFirestore.instance
+            .collection('user_customer')
+            .where('email', isEqualTo: event.email)
+            .get();
+
+        if (userQuery.docs.isEmpty) {
+          emit(AuthFailure(error: 'Email không tồn tại trong hệ thống'));
+          return;
+        }
+
+        // Gửi email đặt lại mật khẩu
+        await _firebaseAuth.sendPasswordResetEmail(email: event.email);
+        emit(AuthSuccess(user: null));
+      } catch (e) {
+        emit(AuthFailure(error: e.toString()));
+      }
+    });
   }
 }

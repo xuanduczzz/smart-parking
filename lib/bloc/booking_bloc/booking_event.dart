@@ -16,3 +16,12 @@ class BookSlot extends BookingEvent {
   final String slotId;
   BookSlot(this.lotId, this.slotId);
 }
+
+class AddPendingReservation extends BookingEvent {
+  final String lotId;
+  final String slotId;
+  final String userId;
+  final DateTime startTime;
+  final DateTime endTime;
+  AddPendingReservation(this.lotId, this.slotId, this.userId, this.startTime, this.endTime);
+}

@@ -1,17 +1,30 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:park/bloc/vehicle/vehicle_bloc.dart';
+import 'package:park/bloc/vehicle/vehicle_event.dart';
+import 'package:park/bloc/vehicle/vehicle_state.dart';
 import 'package:park/data/model/vehicle.dart'; // Đảm bảo bạn đã import Vehicle model
 import 'package:park/config/colors.dart';
 
-class VehiclesPage extends StatelessWidget {
+class VehiclesPage extends StatefulWidget {
   const VehiclesPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final currentUser = FirebaseAuth.instance.currentUser!;
-    final userId = currentUser.uid;
+  State<VehiclesPage> createState() => _VehiclesPageState();
+}
 
+class _VehiclesPageState extends State<VehiclesPage> {
+  final currentUser = FirebaseAuth.instance.currentUser!;
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<VehicleBloc>().add(LoadVehicles(currentUser.uid));
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -44,15 +57,10 @@ class VehiclesPage extends StatelessWidget {
         ),
         child: Column(
           children: [
-            // List of vehicles
             Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('vehicles')
-                    .where('userId', isEqualTo: userId)
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
+              child: BlocBuilder<VehicleBloc, VehicleState>(
+                builder: (context, state) {
+                  if (state is VehicleLoading) {
                     return const Center(
                       child: CircularProgressIndicator(
                         valueColor: AlwaysStoppedAnimation<Color>(blueColor),
@@ -60,7 +68,7 @@ class VehiclesPage extends StatelessWidget {
                     );
                   }
 
-                  if (snapshot.hasError) {
+                  if (state is VehicleError) {
                     return Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -72,7 +80,7 @@ class VehiclesPage extends StatelessWidget {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            "Có lỗi xảy ra",
+                            state.message,
                             style: TextStyle(
                               color: Colors.red[300],
                               fontSize: 16,
@@ -83,194 +91,50 @@ class VehiclesPage extends StatelessWidget {
                     );
                   }
 
-                  final vehicles = snapshot.data?.docs.map((doc) {
-                    return Vehicle.fromMap(doc.data() as Map<String, dynamic>);
-                  }).toList();
-
-                  if (vehicles == null || vehicles.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.directions_car_outlined,
-                            size: 80,
-                            color: Colors.grey[400],
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            "Bạn chưa có xe nào",
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: Colors.grey[600],
-                              fontWeight: FontWeight.w500,
+                  if (state is VehicleLoaded) {
+                    if (state.vehicles.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.directions_car_outlined,
+                              size: 80,
+                              color: Colors.grey[400],
                             ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  return ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: vehicles.length,
-                    itemBuilder: (context, index) {
-                      final vehicle = vehicles[index];
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).cardColor,
-                          borderRadius: BorderRadius.circular(15),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 10,
-                              offset: const Offset(0, 5),
+                            const SizedBox(height: 16),
+                            Text(
+                              "Bạn chưa có xe nào",
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ],
                         ),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () {
-                              // TODO: Implement edit vehicle
-                            },
-                            borderRadius: BorderRadius.circular(15),
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: blueColor.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: const Icon(
-                                      Icons.directions_car,
-                                      color: blueColor,
-                                      size: 24,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          vehicle.licensePlate,
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          "Loại xe: ${vehicle.vehicleType}",
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: Theme.of(context)
-                                                .textTheme
-                                                .bodyMedium!
-                                                .color!
-                                                .withOpacity(0.7),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.delete_outline, color: Colors.red),
-                                    onPressed: () async {
-                                      final confirm = await showDialog<bool>(
-                                        context: context,
-                                        builder: (_) => AlertDialog(
-                                          title: const Text('Xác nhận xóa'),
-                                          content: const Text(
-                                              'Bạn có chắc chắn muốn xóa phương tiện này không?'),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(15),
-                                          ),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () => Navigator.pop(context, false),
-                                              child: const Text('Hủy'),
-                                            ),
-                                            TextButton(
-                                              onPressed: () => Navigator.pop(context, true),
-                                              child: const Text(
-                                                'Xóa',
-                                                style: TextStyle(color: Colors.red),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-
-                                      if (confirm == true) {
-                                        await FirebaseFirestore.instance
-                                            .collection('vehicles')
-                                            .doc(vehicle.vehicleId)
-                                            .delete();
-                                      }
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
                       );
-                    },
-                  );
+                    }
+
+                    return ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: state.vehicles.length,
+                      itemBuilder: (context, index) {
+                        final vehicle = state.vehicles[index];
+                        return _VehicleCard(
+                          vehicle: vehicle,
+                          onDelete: () => _showDeleteConfirmation(context, vehicle),
+                        );
+                      },
+                    );
+                  }
+
+                  return const SizedBox.shrink();
                 },
               ),
             ),
-
-            // Add vehicle button
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, -5),
-                  ),
-                ],
-              ),
-              child: SizedBox(
-                height: 60,
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    _showAddVehicleDialog(context, userId);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: blueColor,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.add_circle_outline, size: 20),
-                      SizedBox(width: 8),
-                      Text(
-                        "Thêm xe mới",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+            _AddVehicleButton(
+              onPressed: () => _showAddVehicleDialog(context),
             ),
           ],
         ),
@@ -278,7 +142,37 @@ class VehiclesPage extends StatelessWidget {
     );
   }
 
-  void _showAddVehicleDialog(BuildContext context, String userId) {
+  Future<void> _showDeleteConfirmation(BuildContext context, Vehicle vehicle) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Xác nhận xóa'),
+        content: const Text('Bạn có chắc chắn muốn xóa phương tiện này không?'),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'Xóa',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      context.read<VehicleBloc>().add(DeleteVehicle(vehicle.vehicleId));
+    }
+  }
+
+  void _showAddVehicleDialog(BuildContext context) {
     final _licensePlateController = TextEditingController();
     final _vehicleTypeController = TextEditingController();
 
@@ -324,44 +218,16 @@ class VehiclesPage extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 24),
-              Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Theme.of(context).dividerColor.withOpacity(0.1),
-                  ),
-                ),
-                child: TextField(
-                  controller: _licensePlateController,
-                  style: const TextStyle(fontSize: 16),
-                  decoration: InputDecoration(
-                    labelText: 'Biển số xe',
-                    prefixIcon: const Icon(Icons.confirmation_number, color: blueColor),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  ),
-                ),
+              _VehicleInputField(
+                controller: _licensePlateController,
+                label: 'Biển số xe',
+                icon: Icons.confirmation_number,
               ),
               const SizedBox(height: 16),
-              Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Theme.of(context).dividerColor.withOpacity(0.1),
-                  ),
-                ),
-                child: TextField(
-                  controller: _vehicleTypeController,
-                  style: const TextStyle(fontSize: 16),
-                  decoration: InputDecoration(
-                    labelText: 'Loại xe',
-                    prefixIcon: const Icon(Icons.category, color: blueColor),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  ),
-                ),
+              _VehicleInputField(
+                controller: _vehicleTypeController,
+                label: 'Loại xe',
+                icon: Icons.category,
               ),
               const SizedBox(height: 24),
               Row(
@@ -378,53 +244,39 @@ class VehiclesPage extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(
-                    onPressed: () async {
+                    onPressed: () {
                       final licensePlate = _licensePlateController.text.trim();
+                      final vehicleType = _vehicleTypeController.text.trim();
 
-                      final existingVehicle = await FirebaseFirestore.instance
-                          .collection('vehicles')
-                          .where('licensePlate', isEqualTo: licensePlate)
-                          .get();
-
-                      if (existingVehicle.docs.isNotEmpty) {
-                        if (context.mounted) {
-                          showDialog(
-                            context: context,
-                            builder: (_) => AlertDialog(
-                              title: const Text('Lỗi'),
-                              content: const Text('Biển số xe này đã tồn tại.'),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(15),
+                      if (licensePlate.isEmpty || vehicleType.isEmpty) {
+                        showDialog(
+                          context: context,
+                          builder: (_) => AlertDialog(
+                            title: const Text('Lỗi'),
+                            content: const Text('Vui lòng nhập đầy đủ thông tin.'),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('OK'),
                               ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: const Text('OK'),
-                                ),
-                              ],
+                            ],
+                          ),
+                        );
+                        return;
+                      }
+
+                      context.read<VehicleBloc>().add(
+                            AddVehicle(
+                              licensePlate: licensePlate,
+                              vehicleType: vehicleType,
+                              userId: currentUser.uid,
                             ),
                           );
-                        }
-                      } else {
-                        final vehicleId = licensePlate;
 
-                        final vehicle = Vehicle(
-                          vehicleId: vehicleId,
-                          createdAt: DateTime.now(),
-                          licensePlate: licensePlate,
-                          userId: userId,
-                          vehicleType: _vehicleTypeController.text,
-                        );
-
-                        await FirebaseFirestore.instance
-                            .collection('vehicles')
-                            .doc(vehicleId)
-                            .set(vehicle.toMap());
-
-                        if (context.mounted) {
-                          Navigator.of(context).pop();
-                        }
-                      }
+                      Navigator.of(context).pop();
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: blueColor,
@@ -440,6 +292,180 @@ class VehiclesPage extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _VehicleCard extends StatelessWidget {
+  final Vehicle vehicle;
+  final VoidCallback onDelete;
+
+  const _VehicleCard({
+    required this.vehicle,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            // TODO: Implement edit vehicle
+          },
+          borderRadius: BorderRadius.circular(15),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: blueColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.directions_car,
+                    color: blueColor,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        vehicle.licensePlate,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "Loại xe: ${vehicle.vehicleType}",
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Theme.of(context)
+                              .textTheme
+                              .bodyMedium!
+                              .color!
+                              .withOpacity(0.7),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                  onPressed: onDelete,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AddVehicleButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const _AddVehicleButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: SizedBox(
+        height: 60,
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: onPressed,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: blueColor,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+          ),
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.add_circle_outline, size: 20),
+              SizedBox(width: 8),
+              Text(
+                "Thêm xe mới",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _VehicleInputField extends StatelessWidget {
+  final TextEditingController controller;
+  final String label;
+  final IconData icon;
+
+  const _VehicleInputField({
+    required this.controller,
+    required this.label,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Theme.of(context).dividerColor.withOpacity(0.1),
+        ),
+      ),
+      child: TextField(
+        controller: controller,
+        style: const TextStyle(fontSize: 16),
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon, color: blueColor),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),
       ),
     );

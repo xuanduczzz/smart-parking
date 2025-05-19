@@ -21,6 +21,28 @@ class ReviewScreen extends StatefulWidget {
 }
 
 class _ReviewScreenState extends State<ReviewScreen> {
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => ReviewBloc(),
+      child: _ReviewScreenContent(reservationId: widget.reservationId),
+    );
+  }
+}
+
+class _ReviewScreenContent extends StatefulWidget {
+  final String reservationId;
+
+  const _ReviewScreenContent({
+    Key? key,
+    required this.reservationId,
+  }) : super(key: key);
+
+  @override
+  State<_ReviewScreenContent> createState() => _ReviewScreenContentState();
+}
+
+class _ReviewScreenContentState extends State<_ReviewScreenContent> {
   final _formKey = GlobalKey<FormState>();
   final _reviewController = TextEditingController();
   final _auth = FirebaseAuth.instance;

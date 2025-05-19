@@ -13,19 +13,19 @@ class CloudinaryHelper {
     final image = img.decodeImage(bytes);
     if (image == null) return file;
 
-    // Giảm kích thước ảnh xuống 800x800 nếu lớn hơn
+    // Giảm kích thước ảnh xuống 400x400 nếu lớn hơn
     var resized = image;
-    if (image.width > 800 || image.height > 800) {
+    if (image.width > 400 || image.height > 400) {
       resized = img.copyResize(
         image,
-        width: 800,
-        height: 800,
+        width: 400,
+        height: 400,
         interpolation: img.Interpolation.linear,
       );
     }
 
-    // Nén ảnh với chất lượng 85%
-    final compressed = img.encodeJpg(resized, quality: 85);
+    // Nén ảnh với chất lượng 60%
+    final compressed = img.encodeJpg(resized, quality: 60);
     final tempDir = Directory.systemTemp;
     final tempFile = File('${tempDir.path}/compressed_${DateTime.now().millisecondsSinceEpoch}.jpg');
     await tempFile.writeAsBytes(compressed);
@@ -42,6 +42,9 @@ class CloudinaryHelper {
 
       var request = http.MultipartRequest('POST', uri)
         ..fields['upload_preset'] = 'avatar_img'
+        ..fields['quality'] = 'auto:good' // Tự động tối ưu chất lượng tốt
+        ..fields['fetch_format'] = 'auto' // Tự động chọn định dạng tốt nhất
+        ..fields['transformation'] = 'c_fill,w_200,h_200,g_face,q_auto,f_auto' // Thêm transformation
         ..files.add(await http.MultipartFile.fromPath('file', compressedFile.path));
 
       final response = await request.send();

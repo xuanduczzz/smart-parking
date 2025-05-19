@@ -4,6 +4,7 @@ import 'package:park/widgets/custom_date_picker.dart';
 import 'package:park/page/booking/booking_slot_page.dart';
 import 'package:park/config/colors.dart';
 import 'package:park/config/routes.dart';
+import 'package:park/page/booking//utils/booking_validator.dart';
 
 class BookingPage extends StatefulWidget {
   final ParkingLot parkingLot;
@@ -16,8 +17,76 @@ class BookingPage extends StatefulWidget {
 
 class _BookingPageState extends State<BookingPage> {
   DateTime _selectedDate = DateTime.now();
-  TimeOfDay _startTime = TimeOfDay.now();
-  TimeOfDay _endTime = TimeOfDay.now().replacing(hour: TimeOfDay.now().hour + 1);
+  TimeOfDay _startTime = BookingValidator.getDefaultStartTime();
+  TimeOfDay _endTime = BookingValidator.getDefaultEndTime();
+  String? _errorMessage;
+
+  bool _isValidDate(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final selected = DateTime(date.year, date.month, date.day);
+    return selected.isAfter(today) || selected.isAtSameMomentAs(today);
+  }
+
+  bool _isValidTimeForToday(TimeOfDay time) {
+    final now = DateTime.now();
+    final currentTime = TimeOfDay(hour: now.hour, minute: now.minute);
+    
+    // Chuyển đổi thời gian thành phút để so sánh
+    final timeInMinutes = time.hour * 60 + time.minute;
+    final currentTimeInMinutes = currentTime.hour * 60 + currentTime.minute;
+    
+    return timeInMinutes >= currentTimeInMinutes;
+  }
+
+  bool _isValidTimeRange(TimeOfDay start, TimeOfDay end) {
+    final startMinutes = start.hour * 60 + start.minute;
+    final endMinutes = end.hour * 60 + end.minute;
+    final duration = endMinutes - startMinutes;
+    
+    if (duration <= 0) return false;
+    if (duration > 24 * 60) return false; // Không cho phép đặt quá 24 giờ
+    
+    // Kiểm tra nếu là ngày hiện tại
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final selected = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
+    
+    if (selected.isAtSameMomentAs(today)) {
+      if (!_isValidTimeForToday(start)) return false;
+    }
+    
+    return true;
+  }
+
+  void _validateAndUpdateTime(TimeOfDay newStartTime, TimeOfDay newEndTime) {
+    setState(() {
+      _errorMessage = BookingValidator.validateBookingTime(_selectedDate, newStartTime, newEndTime);
+      if (_errorMessage == null) {
+        _startTime = newStartTime;
+        _endTime = newEndTime;
+      }
+    });
+  }
+
+  void _validateAndUpdateDate(DateTime newDate) {
+    setState(() {
+      _errorMessage = BookingValidator.validateBookingTime(newDate, _startTime, _endTime);
+      if (_errorMessage == null) {
+        _selectedDate = newDate;
+      } else {
+        // Nếu là ngày hiện tại, cập nhật thời gian mặc định
+        final now = DateTime.now();
+        final today = DateTime(now.year, now.month, now.day);
+        final selected = DateTime(newDate.year, newDate.month, newDate.day);
+        
+        if (selected.isAtSameMomentAs(today)) {
+          _startTime = BookingValidator.getDefaultStartTime();
+          _endTime = BookingValidator.getDefaultEndTime();
+        }
+      }
+    });
+  }
 
   @override
   void initState() {
@@ -166,14 +235,25 @@ class _BookingPageState extends State<BookingPage> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
+                            if (_errorMessage != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: Text(
+                                  _errorMessage!,
+                                  style: const TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
                             const SizedBox(height: 16),
                             BookingTimePickerWidget(
                               selectedDate: _selectedDate,
                               startTime: _startTime,
                               endTime: _endTime,
-                              onDateChanged: (date) => setState(() => _selectedDate = date),
-                              onStartTimeChanged: (time) => setState(() => _startTime = time),
-                              onEndTimeChanged: (time) => setState(() => _endTime = time),
+                              onDateChanged: _validateAndUpdateDate,
+                              onStartTimeChanged: (time) => _validateAndUpdateTime(time, _endTime),
+                              onEndTimeChanged: (time) => _validateAndUpdateTime(_startTime, time),
                             ),
                           ],
                         ),
@@ -199,7 +279,7 @@ class _BookingPageState extends State<BookingPage> {
                 child: SizedBox(
                   height: 56,
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: _errorMessage != null ? null : () {
                       Navigator.pushNamed(
                         context,
                         AppRoutes.bookingSlot,

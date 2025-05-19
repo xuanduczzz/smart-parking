@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:park/data/model/parking_lot.dart';
 import 'package:park/bloc/booking_bloc/booking_bloc.dart';
 import 'package:park/page/reservation/reservation_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class BookingSlotPage extends StatefulWidget {
   final ParkingLot parkingLot;
@@ -24,6 +25,7 @@ class BookingSlotPage extends StatefulWidget {
 
 class _BookingSlotPageState extends State<BookingSlotPage> {
   String selectedFilter = "ALL"; // Default filter to ALL
+  String? _pendingSlotId; // Lưu slotId vừa bấm
 
   @override
   Widget build(BuildContext context) {
@@ -107,7 +109,31 @@ class _BookingSlotPageState extends State<BookingSlotPage> {
               ),
             const SizedBox(height: 12),
 
-            BlocBuilder<BookingBloc, BookingState>(
+            BlocConsumer<BookingBloc, BookingState>(
+              listener: (context, state) {
+                if (state is BookingLoaded && _pendingSlotId != null) {
+                  final user = FirebaseAuth.instance.currentUser;
+                  final slotList = state.slots.where((s) => s.id == _pendingSlotId);
+                  if (slotList.isNotEmpty) {
+                    final slot = slotList.first;
+                    if (slot.pendingReservations.any((p) => p.userId == user?.uid)) {
+                      // Đã pending thành công, chuyển sang trang reservation
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ReservationPage(
+                            parkingLot: widget.parkingLot,
+                            slot: slot,
+                            startTime: startDateTime,
+                            endTime: endDateTime,
+                          ),
+                        ),
+                      );
+                      _pendingSlotId = null; // Reset
+                    }
+                  }
+                }
+              },
               builder: (context, state) {
                 if (state is BookingLoading) {
                   return const Center(child: CircularProgressIndicator());
@@ -134,32 +160,47 @@ class _BookingSlotPageState extends State<BookingSlotPage> {
                       final slot = filteredSlots[index];
 
                       return GestureDetector(
-                        onTap: () {
-                          if (!slot.isBooked) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ReservationPage(
-                                  parkingLot: widget.parkingLot,
-                                  slot: slot,
-                                  startTime: startDateTime,
-                                  endTime: endDateTime,
-                                ),
-                              ),
-                            );
-                          }
-                        },
+                        onTap: slot.isBooked
+                            ? null
+                            : () {
+                                final user = FirebaseAuth.instance.currentUser;
+                                if (user != null) {
+                                  // Chuyển sang trang reservation ngay lập tức
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ReservationPage(
+                                        parkingLot: widget.parkingLot,
+                                        slot: slot,
+                                        startTime: startDateTime,
+                                        endTime: endDateTime,
+                                      ),
+                                    ),
+                                  );
+                                  
+                                  // Xử lý pending ở background
+                                  context.read<BookingBloc>().add(
+                                    AddPendingReservation(
+                                      widget.parkingLot.id,
+                                      slot.id,
+                                      user.uid,
+                                      startDateTime,
+                                      endDateTime,
+                                    ),
+                                  );
+                                }
+                              },
                         child: Container(
                           decoration: BoxDecoration(
                             color: slot.isBooked
-                                ? Colors.grey[700] // Slot đã đặt
+                                ? Colors.grey[700] // Slot đã đặt hoặc pending
                                 : Colors.green[300], // Slot trống
                             borderRadius: BorderRadius.circular(12),
                           ),
                           alignment: Alignment.center,
                           child: slot.isBooked
                               ? Image.asset(
-                            'assets/images/car.png', // Hình xe cho slot đã đặt
+                            'assets/images/car.png', // Hình xe cho slot đã đặt hoặc pending
                             width: 80,
                             height: 40,
                             fit: BoxFit.cover,

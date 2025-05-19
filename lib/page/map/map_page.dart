@@ -4,15 +4,18 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:park/bloc/user_bloc/user_event.dart';
 import 'package:park/config/colors.dart';
 import 'package:park/data/service/parking_service.dart';
 import 'package:park/bloc/map_bloc/map_bloc.dart';
+import 'package:park/bloc/user_bloc/user_bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:park/data/model/parking_lot.dart';
-import 'package:park/data/service/reservation_status_listener.dart';
 import 'package:park/controller/theme_controller.dart';
 import 'package:park/config/routes.dart';
+
+import '../../bloc/user_bloc/user_state.dart';
 
 class MapPage extends StatefulWidget {
   const MapPage({super.key});
@@ -30,7 +33,6 @@ class _MapPageState extends State<MapPage> {
   void initState() {
     super.initState();
 
-    ReservationStatusListener().listenToStatusChanges();
 
     _determinePosition().then((position) {
       setState(() {
@@ -62,8 +64,11 @@ class _MapPageState extends State<MapPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => MapBloc(ParkingService())..add(LoadParkingMarkersEvent()),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (context) => MapBloc(ParkingService())..add(LoadParkingMarkersEvent())),
+        BlocProvider(create: (context) => UserBloc()..add(LoadUserInfo())),
+      ],
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: blueColor,
@@ -117,10 +122,32 @@ class _MapPageState extends State<MapPage> {
                   ),
                 ),
                 child: SafeArea(
-                  child: FutureBuilder<DocumentSnapshot>(
-                    future: FirebaseFirestore.instance.collection('user_customer').doc(FirebaseAuth.instance.currentUser?.uid).get(),
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData || !snapshot.data!.exists) {
+                  child: BlocBuilder<UserBloc, UserState>(
+                    builder: (context, state) {
+                      if (state is UserLoading) {
+                        return const UserAccountsDrawerHeader(
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                          ),
+                          accountName: Text(
+                            'Đang tải...',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          accountEmail: Text(
+                            'Đang tải...',
+                            style: TextStyle(color: Colors.white70),
+                          ),
+                          currentAccountPicture: CircleAvatar(
+                            backgroundColor: Colors.white,
+                            child: Icon(Icons.person, size: 40, color: blueColor),
+                          ),
+                        );
+                      }
+
+                      if (state is UserError) {
                         return UserAccountsDrawerHeader(
                           decoration: const BoxDecoration(
                             color: Colors.transparent,
@@ -149,36 +176,54 @@ class _MapPageState extends State<MapPage> {
                         );
                       }
 
-                      final userData = snapshot.data!;
-                      final name = userData['name'] ?? 'Người dùng';
-                      final email = userData['email'] ?? 'user@example.com';
-                      final avatarUrl = userData['avatar'];
+                      if (state is UserLoaded) {
+                        return UserAccountsDrawerHeader(
+                          decoration: const BoxDecoration(
+                            color: Colors.transparent,
+                          ),
+                          accountName: Text(
+                            state.name,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          accountEmail: Text(
+                            state.email,
+                            style: const TextStyle(color: Colors.white70),
+                          ),
+                          currentAccountPicture: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2),
+                            ),
+                            child: CircleAvatar(
+                              backgroundColor: Colors.white,
+                              backgroundImage: state.avatarUrl != null ? NetworkImage(state.avatarUrl!) : null,
+                              child: state.avatarUrl == null ? const Icon(Icons.person, size: 40, color: blueColor) : null,
+                            ),
+                          ),
+                        );
+                      }
 
-                      return UserAccountsDrawerHeader(
-                        decoration: const BoxDecoration(
+                      return const UserAccountsDrawerHeader(
+                        decoration: BoxDecoration(
                           color: Colors.transparent,
                         ),
                         accountName: Text(
-                          name,
-                          style: const TextStyle(
+                          'Người dùng',
+                          style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         accountEmail: Text(
-                          email,
-                          style: const TextStyle(color: Colors.white70),
+                          'user@example.com',
+                          style: TextStyle(color: Colors.white70),
                         ),
-                        currentAccountPicture: Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
-                          ),
-                          child: CircleAvatar(
-                            backgroundColor: Colors.white,
-                            backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
-                            child: avatarUrl == null ? const Icon(Icons.person, size: 40, color: blueColor) : null,
-                          ),
+                        currentAccountPicture: CircleAvatar(
+                          backgroundColor: Colors.white,
+                          child: Icon(Icons.person, size: 40, color: blueColor),
                         ),
                       );
                     },

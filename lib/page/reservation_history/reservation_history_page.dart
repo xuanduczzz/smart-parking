@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'package:park/bloc/reservation_history_bloc/reservation_history_bloc.dart';
-import 'package:park/data/model/reservation.dart';
-import 'package:park/bloc/review/review_bloc.dart';
-import 'package:park/page/reviews/review_screen.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import 'package:park/config/colors.dart';
 import 'package:park/config/routes.dart';
+import 'package:park/page/reservation_history/widgets/reservation_detail_dialog.dart';
+import 'package:park/page/reservation_history/widgets/reservation_info_row.dart';
 
 class ReservationHistoryPage extends StatelessWidget {
   const ReservationHistoryPage({super.key});
@@ -116,7 +113,10 @@ class ReservationHistoryPage extends StatelessWidget {
                             arguments: {'reservationId': res.id},
                           );
                         } else {
-                          showReservationDetailDialog(context, res);
+                          showDialog(
+                            context: context,
+                            builder: (context) => ReservationDetailDialog(reservation: res),
+                          );
                         }
                       },
                       borderRadius: BorderRadius.circular(16),
@@ -203,18 +203,16 @@ class ReservationHistoryPage extends StatelessWidget {
                               padding: const EdgeInsets.all(16),
                               child: Column(
                                 children: [
-                                  _buildInfoRow(
-                                    context,
-                                    Icons.access_time,
-                                    "Thời gian",
-                                    "${formatDateTime(res.startTime)} - ${formatDateTime(res.endTime)}",
+                                  ReservationInfoRow(
+                                    icon: Icons.access_time,
+                                    label: "Thời gian",
+                                    value: "${formatDateTime(res.startTime)} - ${formatDateTime(res.endTime)}",
                                   ),
                                   const SizedBox(height: 12),
-                                  _buildInfoRow(
-                                    context,
-                                    Icons.attach_money,
-                                    "Tổng giá",
-                                    "${res.totalPrice.toStringAsFixed(2)} VND",
+                                  ReservationInfoRow(
+                                    icon: Icons.attach_money,
+                                    label: "Tổng giá",
+                                    value: "${res.totalPrice.toStringAsFixed(2)} VND",
                                     valueColor: Colors.green,
                                   ),
                                   if (res.status.toLowerCase() == 'đã checkout') ...[
@@ -265,245 +263,5 @@ class ReservationHistoryPage extends StatelessWidget {
       default:
         return Colors.grey;
     }
-  }
-
-  Widget _buildInfoRow(BuildContext context, IconData icon, String label, String value, {Color? valueColor}) {
-    return Row(
-      children: [
-        Icon(
-          icon,
-          size: 20,
-          color: Theme.of(context).textTheme.bodyMedium!.color!.withOpacity(0.7),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Theme.of(context).textTheme.bodyMedium!.color!.withOpacity(0.7),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: valueColor ?? Theme.of(context).textTheme.bodyLarge!.color,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  void showReservationDetailDialog(BuildContext context, Reservation reservation) {
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        final isWide = MediaQuery.of(ctx).size.width > 500;
-        final maxDialogHeight = MediaQuery.of(ctx).size.height * 0.85;
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: maxDialogHeight,
-              maxWidth: isWide ? 500 : double.infinity,
-            ),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: blueColor.withAlpha((0.12 * 255).round()),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(Icons.info_outline_rounded, color: blueColor, size: 24),
-                        ),
-                        const SizedBox(width: 12),
-                        const Text(
-                          'Chi tiết đặt chỗ',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Divider(color: Theme.of(context).dividerColor.withAlpha((0.2 * 255).round())),
-                    const SizedBox(height: 6),
-                    isWide
-                        ? Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  children: [
-                                    _buildDetailRow(context, Icons.local_parking, 'Bãi xe', reservation.lotName),
-                                    _buildDetailRow(context, Icons.person, 'Tên người đặt', reservation.name),
-                                    _buildDetailRow(context, Icons.directions_car, 'Biển số xe', reservation.vehicleId),
-                                    _buildDetailRow(context, Icons.attach_money, 'Giá/giờ', '${reservation.pricePerHour} VND'),
-                                    _buildDetailRow(context, Icons.info, 'Trạng thái', reservation.status, valueColor: _getStatusColor(reservation.status)),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  children: [
-                                    _buildDetailRow(context, Icons.place, 'Vị trí', reservation.slotId),
-                                    _buildDetailRow(context, Icons.phone, 'Số điện thoại', reservation.phoneNumber),
-                                    _buildDetailRow(context, Icons.access_time, 'Bắt đầu', DateFormat('dd/MM/yyyy HH:mm').format(reservation.startTime)),
-                                    _buildDetailRow(context, Icons.timer_off, 'Kết thúc', DateFormat('dd/MM/yyyy HH:mm').format(reservation.endTime)),
-                                    _buildDetailRow(context, Icons.payments, 'Tổng giá', '${reservation.totalPrice.toStringAsFixed(2)} VND', valueColor: Colors.green),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          )
-                        : Column(
-                            children: [
-                              _buildDetailRow(context, Icons.local_parking, 'Bãi xe', reservation.lotName),
-                              _buildDetailRow(context, Icons.place, 'Vị trí', reservation.slotId),
-                              _buildDetailRow(context, Icons.person, 'Tên người đặt', reservation.name),
-                              _buildDetailRow(context, Icons.phone, 'Số điện thoại', reservation.phoneNumber),
-                              _buildDetailRow(context, Icons.directions_car, 'Biển số xe', reservation.vehicleId),
-                              _buildDetailRow(context, Icons.access_time, 'Bắt đầu', DateFormat('dd/MM/yyyy HH:mm').format(reservation.startTime)),
-                              _buildDetailRow(context, Icons.timer_off, 'Kết thúc', DateFormat('dd/MM/yyyy HH:mm').format(reservation.endTime)),
-                              _buildDetailRow(context, Icons.attach_money, 'Giá/giờ', '${reservation.pricePerHour} VND'),
-                              _buildDetailRow(context, Icons.payments, 'Tổng giá', '${reservation.totalPrice.toStringAsFixed(2)} VND', valueColor: Colors.green),
-                              _buildDetailRow(context, Icons.info, 'Trạng thái', reservation.status, valueColor: _getStatusColor(reservation.status)),
-                            ],
-                          ),
-                    if (reservation.qrCode.isNotEmpty) ...[
-                      const SizedBox(height: 14),
-                      Center(
-                        child: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).scaffoldBackgroundColor,
-                            borderRadius: BorderRadius.circular(14),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: QrImageView(
-                            data: reservation.qrCode,
-                            version: QrVersions.auto,
-                            size: isWide ? 110 : 120,
-                            backgroundColor: Colors.white,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Center(
-                        child: Text(
-                          'Mã QR check-in',
-                          style: TextStyle(
-                            color: Theme.of(context).hintColor,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 14),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 44,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: blueColor,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        onPressed: () => Navigator.pop(ctx),
-                        icon: const Icon(Icons.close_rounded, size: 20),
-                        label: const Text(
-                          'Đóng',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildDetailRow(BuildContext context, IconData icon, String label, String value, {Color? valueColor}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: blueColor, size: 22),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Theme.of(context).hintColor,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: valueColor ?? Theme.of(context).textTheme.bodyLarge?.color,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

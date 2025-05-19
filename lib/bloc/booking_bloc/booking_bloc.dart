@@ -13,6 +13,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   BookingBloc(this.firestore) : super(BookingInitial()) {
     on<LoadSlots>(_onLoadSlots);
     on<BookSlot>(_onBookSlot);
+    on<AddPendingReservation>(_onAddPendingReservation);
   }
 
   void _onLoadSlots(LoadSlots event, Emitter<BookingState> emit) async {
@@ -49,14 +50,17 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         return (event.selectedStartTime.isBefore(endTime) && event.selectedEndTime.isAfter(startTime));
       }).map((reservationDoc) => reservationDoc['slotId'] as String).toList();
 
-      // Cập nhật danh sách các slot với trạng thái isBooked
+      final now = DateTime.now();
       final slots = snapshot.docs.map((doc) {
         final slot = ParkingSlot.fromMap(doc.data());
-        // Nếu slot bị đặt trong khoảng thời gian người dùng chọn, đánh dấu là đã đặt
-        if (bookedSlotIds.contains(slot.id)) {
-          return ParkingSlot(id: slot.id, isBooked: true);
-        }
-        return slot;
+        // Kiểm tra pending reservation còn hiệu lực
+        final validPending = slot.pendingReservations.where((pending) {
+          return now.difference(pending.createdAt).inMinutes < 3 &&
+            event.selectedStartTime.isBefore(pending.endTime) && event.selectedEndTime.isAfter(pending.startTime);
+        }).toList();
+        final isPending = validPending.isNotEmpty;
+        final isBooked = bookedSlotIds.contains(slot.id) || isPending;
+        return ParkingSlot(id: slot.id, isBooked: isBooked, pendingReservations: slot.pendingReservations);
       }).toList();
 
       emit(BookingLoaded(slots));
@@ -64,6 +68,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       emit(BookingError("Lỗi khi tải slot: $e"));
     }
   }
+
   void _onBookSlot(BookSlot event, Emitter<BookingState> emit) async {
     if (state is BookingLoaded) {
       final currentState = state as BookingLoaded;
@@ -92,5 +97,26 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     }
   }
 
-
+  Future<void> _onAddPendingReservation(AddPendingReservation event, Emitter<BookingState> emit) async {
+    try {
+      final pending = {
+        'userId': event.userId,
+        'startTime': event.startTime.toIso8601String(),
+        'endTime': event.endTime.toIso8601String(),
+        'createdAt': DateTime.now().toIso8601String(),
+      };
+      final slotRef = firestore
+          .collection('parking_lots')
+          .doc(event.lotId)
+          .collection('slots')
+          .doc(event.slotId);
+      await slotRef.update({
+        'pendingReservations': FieldValue.arrayUnion([pending])
+      });
+      // Sau khi thêm, reload lại slot
+      add(LoadSlots(event.lotId, event.startTime, event.endTime));
+    } catch (e) {
+      emit(BookingError("Lỗi khi thêm pending reservation: $e"));
+    }
+  }
 }

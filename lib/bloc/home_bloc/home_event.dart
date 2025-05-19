@@ -32,4 +32,6 @@ class LoadParkingLotDetail extends HomeEvent {
 
   @override
   List<Object> get props => [parkingLotId];
-} 
+}
+
+class LoadAllParkingLots extends HomeEvent {} 

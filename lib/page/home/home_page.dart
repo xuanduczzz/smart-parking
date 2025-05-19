@@ -22,7 +22,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    context.read<HomeBloc>().add(LoadParkingLotInfo(parkingLotId: widget.parkingLot.id));
+    // Không cần load lại thông tin vì đã có sẵn từ HomeBloc
   }
 
   @override
@@ -70,10 +70,15 @@ class _HomePageState extends State<HomePage> {
             );
           }
 
-          if (state is HomeLoaded) {
+          if (state is AllParkingLotsLoaded) {
+            final lotInfo = state.parkingLotsInfo[widget.parkingLot.id];
+            if (lotInfo == null) {
+              return const Center(child: Text('Không tìm thấy thông tin bãi xe'));
+            }
+
             return RefreshIndicator(
               onRefresh: () async {
-                context.read<HomeBloc>().add(RefreshParkingLotInfo(parkingLotId: widget.parkingLot.id));
+                context.read<HomeBloc>().add(LoadAllParkingLots());
               },
               child: SingleChildScrollView(
                 child: Column(
@@ -183,13 +188,27 @@ class _HomePageState extends State<HomePage> {
                                 ),
                               ),
                               const SizedBox(height: 20),
-                              _buildInfoRow(Icons.location_on, "Địa chỉ", state.address),
+                              _buildInfoRow(Icons.location_on, "Địa chỉ", lotInfo['address'] as String),
                               const SizedBox(height: 16),
-                              _buildInfoRow(Icons.local_parking, "Tổng số chỗ", "${state.totalSlots} chỗ"),
+                              _buildInfoRow(Icons.local_parking, "Tổng số chỗ", "${lotInfo['totalSlots']} chỗ"),
                               const SizedBox(height: 16),
-                              _buildInfoRow(Icons.attach_money, "Giá", "${state.pricePerHour.toStringAsFixed(0)} VND / giờ"),
+                              _buildInfoRow(Icons.attach_money, "Giá", "${(lotInfo['pricePerHour'] as double).toStringAsFixed(0)} VND / giờ"),
                               const SizedBox(height: 16),
-                              _buildInfoRow(Icons.phone, "Số điện thoại chủ bãi", state.ownerPhone),
+                              _buildInfoRow(Icons.phone, "Số điện thoại chủ bãi", lotInfo['ownerPhone'] as String),
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  const Icon(Icons.star, color: Colors.amber, size: 24),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    "Đánh giá trung bình: ${(lotInfo['averageRating'] as double).toStringAsFixed(1)} sao",
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
                               const SizedBox(height: 30),
                               SizedBox(
                                 width: double.infinity,
