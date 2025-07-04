@@ -14,6 +14,7 @@ class ParkingLot {
   final List<ParkingSlot> slots;
   final List<String> parkingLotMap;
   final String oid;
+  final bool status;
 
   ParkingLot({
     required this.id,
@@ -28,6 +29,7 @@ class ParkingLot {
     required this.slots,
     required this.parkingLotMap,
     required this.oid,
+    required this.status,
   });
 
   factory ParkingLot.fromFirestore(String id, Map<String, dynamic> data) {
@@ -50,6 +52,7 @@ class ParkingLot {
       slots: [], // Sẽ được gán sau từ Firestore
       parkingLotMap: (data['parkingLotMap'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
       oid: data['oid'] ?? '',
+      status: data['status'] ?? true,
     );
   }
 
@@ -66,6 +69,7 @@ class ParkingLot {
     List<ParkingSlot>? slots,
     List<String>? parkingLotMap,
     String? oid,
+    bool? status,
   }) {
     return ParkingLot(
       id: id ?? this.id,
@@ -80,6 +84,7 @@ class ParkingLot {
       slots: slots ?? this.slots,
       parkingLotMap: parkingLotMap ?? this.parkingLotMap,
       oid: oid ?? this.oid,
+      status: status ?? this.status,
     );
   }
 }

@@ -42,9 +42,7 @@ class CloudinaryHelper {
 
       var request = http.MultipartRequest('POST', uri)
         ..fields['upload_preset'] = 'avatar_img'
-        ..fields['quality'] = 'auto:good' // Tự động tối ưu chất lượng tốt
-        ..fields['fetch_format'] = 'auto' // Tự động chọn định dạng tốt nhất
-        ..fields['transformation'] = 'c_fill,w_200,h_200,g_face,q_auto,f_auto' // Thêm transformation
+        ..fields['folder'] = 'payment_images' // Thêm folder để tổ chức ảnh
         ..files.add(await http.MultipartFile.fromPath('file', compressedFile.path));
 
       final response = await request.send();
@@ -55,7 +53,9 @@ class CloudinaryHelper {
       await compressedFile.delete();
 
       if (response.statusCode == 200 && jsonResponse['secure_url'] != null) {
-        return jsonResponse['secure_url'];
+        // Thêm transformation vào URL sau khi upload thành công
+        final secureUrl = jsonResponse['secure_url'] as String;
+        return secureUrl.replaceAll('/upload/', '/upload/c_fill,w_400,h_400,q_auto,f_auto/');
       } else {
         print('Error: ${jsonResponse['error'] ?? 'Unknown error'}');
         print('Response: $jsonResponse');

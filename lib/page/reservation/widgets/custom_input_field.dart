@@ -6,6 +6,8 @@ class CustomInputField extends StatelessWidget {
   final String label;
   final IconData icon;
   final TextInputType? keyboardType;
+  final FocusNode? focusNode;
+  final Function(String)? onSubmitted;
 
   const CustomInputField({
     super.key,
@@ -13,6 +15,8 @@ class CustomInputField extends StatelessWidget {
     required this.label,
     required this.icon,
     this.keyboardType,
+    this.focusNode,
+    this.onSubmitted,
   });
 
   @override
@@ -31,6 +35,8 @@ class CustomInputField extends StatelessWidget {
       ),
       child: TextField(
         controller: controller,
+        focusNode: focusNode,
+        onSubmitted: onSubmitted,
         keyboardType: keyboardType,
         style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
         decoration: InputDecoration(

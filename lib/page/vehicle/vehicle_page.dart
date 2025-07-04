@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:park/bloc/vehicle/vehicle_bloc.dart';
 import 'package:park/bloc/vehicle/vehicle_event.dart';
 import 'package:park/bloc/vehicle/vehicle_state.dart';
-import 'package:park/data/model/vehicle.dart'; // Đảm bảo bạn đã import Vehicle model
+import 'package:park/data/model/vehicle.dart';
 import 'package:park/config/colors.dart';
 
 class VehiclesPage extends StatefulWidget {

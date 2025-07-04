@@ -21,6 +21,7 @@ import 'bloc/home_bloc/home_bloc.dart';
 import 'package:park/bloc/vehicle/vehicle_bloc.dart';
 import 'package:park/repository/vehicle_repository.dart';
 import 'package:park/page/splash//splash_screen.dart';
+import 'bloc/payment_bloc/payment_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,11 +45,27 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
-        BlocProvider(create: (_) => AuthBloc(firebaseAuth: FirebaseAuth.instance)),
-        BlocProvider(create: (_) => ReservationBloc(FirebaseFirestore.instance)),
-        BlocProvider(create: (_) => BookingBloc(FirebaseFirestore.instance)),
-        BlocProvider(create: (_) => VoucherBloc(FirebaseFirestore.instance)),
-        BlocProvider(create: (_) => NotificationBloc(FirebaseFirestore.instance)),
+        BlocProvider(
+          create: (context) => AuthBloc(
+            firebaseAuth: FirebaseAuth.instance,
+          ),
+        ),
+        BlocProvider(
+          create: (context) => ReservationBloc(
+            FirebaseFirestore.instance,
+          ),
+        ),
+        BlocProvider(
+          create: (context) => PaymentBloc(
+            FirebaseFirestore.instance,
+          ),
+        ),
+        BlocProvider(
+          create: (context) => BookingBloc(FirebaseFirestore.instance)),
+        BlocProvider(
+          create: (context) => VoucherBloc(FirebaseFirestore.instance)),
+        BlocProvider(
+          create: (context) => NotificationBloc(FirebaseFirestore.instance)),
         BlocProvider(
           create: (context) {
             final bloc = HomeBloc(firestore: FirebaseFirestore.instance);
@@ -81,7 +98,26 @@ class MyApp extends StatelessWidget {
           darkTheme: ThemeData.dark(),
           themeMode: mode,
           onGenerateRoute: AppRoutes.generateRoute,
-          home: const SplashScreen(),
+          home: MultiBlocProvider(
+            providers: [
+              BlocProvider(
+                create: (context) => AuthBloc(
+                  firebaseAuth: FirebaseAuth.instance,
+                ),
+              ),
+              BlocProvider(
+                create: (context) => ReservationBloc(
+                  FirebaseFirestore.instance,
+                ),
+              ),
+              BlocProvider(
+                create: (context) => PaymentBloc(
+                  FirebaseFirestore.instance,
+                ),
+              ),
+            ],
+            child: const SplashScreen(),
+          ),
         );
       },
     );

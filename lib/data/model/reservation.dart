@@ -8,13 +8,15 @@ class Reservation {
   final DateTime startTime;
   final DateTime endTime;
   final double pricePerHour;
-  final double totalPrice; // ✅ Thêm totalPrice
+  final double totalPrice;
   final String userId;
   final String name;
   final String qrCode;
   final String vehicleId;
   final String phoneNumber;
-  String status; // Changed from 'reserved' to dynamic status values
+  final String ownerId;
+  final String ownerQRUrl;
+  String status;
 
   Reservation({
     required this.id,
@@ -30,7 +32,9 @@ class Reservation {
     required this.vehicleId,
     required this.qrCode,
     required this.phoneNumber,
-    this.status = 'pending', // Default status is 'pending'
+    required this.ownerId,
+    required this.ownerQRUrl,
+    this.status = 'pending',
   });
 
   Map<String, dynamic> toMap() {
@@ -48,6 +52,8 @@ class Reservation {
       'name': name,
       'vehicleId': vehicleId,
       'phoneNumber': phoneNumber,
+      'ownerId': ownerId,
+      'ownerQRUrl': ownerQRUrl,
       'createdAt': FieldValue.serverTimestamp(),
     };
   }
@@ -68,6 +74,8 @@ class Reservation {
       qrCode: map['qrCode'] ?? '',
       vehicleId: map['vehicleId'] ?? '',
       phoneNumber: map['phoneNumber'] ?? '',
+      ownerId: map['ownerId'] ?? '',
+      ownerQRUrl: map['ownerQRUrl'] ?? '',
     );
   }
 }

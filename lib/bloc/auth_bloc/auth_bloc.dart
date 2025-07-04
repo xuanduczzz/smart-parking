@@ -7,24 +7,26 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 part 'auth_event.dart';
 part 'auth_state.dart';
 
+/// AuthBloc quản lý trạng thái xác thực người dùng
+/// Xử lý các sự kiện đăng ký, đăng nhập, đăng xuất và đặt lại mật khẩu
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final FirebaseAuth _firebaseAuth;
 
   AuthBloc({required FirebaseAuth firebaseAuth})
       : _firebaseAuth = firebaseAuth,
         super(AuthInitial()) {
-    // Đăng ký sự kiện SignUpRequested
+    // Xử lý sự kiện đăng ký tài khoản mới
     on<SignUpRequested>((event, emit) async {
       emit(AuthLoading());
       try {
-        // Đăng ký người dùng mới với Firebase Auth
+        // Tạo tài khoản mới trong Firebase Authentication
         UserCredential userCredential = await _firebaseAuth.createUserWithEmailAndPassword(
           email: event.email,
           password: event.password,
         );
         User? user = userCredential.user;
 
-        // Lưu thông tin người dùng vào Firestore
+        // Lưu thông tin người dùng vào Firestore database
         if (user != null) {
           await FirebaseFirestore.instance.collection('user_customer').doc(user.uid).set({
             'email': event.email,
@@ -40,11 +42,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
     });
 
-    // Đăng ký sự kiện LoginRequested
+    // Xử lý sự kiện đăng nhập
     on<LoginRequested>((event, emit) async {
       emit(AuthLoading());
       try {
-        // Kiểm tra email có tồn tại trong collection user_customer không
+        // Kiểm tra xem email có tồn tại trong collection user_customer không
         final userQuery = await FirebaseFirestore.instance
             .collection('user_customer')
             .where('email', isEqualTo: event.email)
@@ -55,7 +57,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           return;
         }
 
-        // Nếu email tồn tại, tiến hành đăng nhập
+        // Thực hiện đăng nhập với Firebase Authentication
         UserCredential userCredential = await _firebaseAuth.signInWithEmailAndPassword(
           email: event.email,
           password: event.password,
@@ -66,17 +68,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
     });
 
-    // Đăng ký sự kiện LogoutRequested
+    // Xử lý sự kiện đăng xuất
     on<LogoutRequested>((event, emit) async {
       await _firebaseAuth.signOut();
       emit(AuthInitial());
     });
 
-    // Đăng ký sự kiện ResetPasswordRequested
+    // Xử lý sự kiện đặt lại mật khẩu
     on<ResetPasswordRequested>((event, emit) async {
       emit(AuthLoading());
       try {
-        // Kiểm tra email có tồn tại trong collection user_customer không
+        // Kiểm tra email có tồn tại trong hệ thống không
         final userQuery = await FirebaseFirestore.instance
             .collection('user_customer')
             .where('email', isEqualTo: event.email)

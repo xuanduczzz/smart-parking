@@ -85,7 +85,8 @@ class AppRoutes {
           !args.containsKey('parkingLot') ||
           !args.containsKey('selectedDate') ||
           !args.containsKey('startTime') ||
-          !args.containsKey('endTime')) {
+          !args.containsKey('endTime') ||
+          !args.containsKey('vehicleType')) {
         return _buildErrorRoute('Invalid arguments for booking slot route');
       }
       return PageTransitions.slideTransition(
@@ -94,6 +95,7 @@ class AppRoutes {
           selectedDate: args['selectedDate'] as DateTime,
           startTime: args['startTime'] as TimeOfDay,
           endTime: args['endTime'] as TimeOfDay,
+          vehicleType: args['vehicleType'] as String,
         ),
       );
     } else if (routeName == AppRoutes.review) {

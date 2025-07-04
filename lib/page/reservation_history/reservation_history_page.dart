@@ -212,7 +212,7 @@ class ReservationHistoryPage extends StatelessWidget {
                                   ReservationInfoRow(
                                     icon: Icons.attach_money,
                                     label: "Tổng giá",
-                                    value: "${res.totalPrice.toStringAsFixed(2)} VND",
+                                    value: "${res.totalPrice.toStringAsFixed(0)} VND",
                                     valueColor: Colors.green,
                                   ),
                                   if (res.status.toLowerCase() == 'đã checkout') ...[

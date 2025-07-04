@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:park/data/model/parking_lot.dart';
 import 'package:park/widgets/custom_date_picker.dart';
 import 'package:park/page/booking/booking_slot_page.dart';
 import 'package:park/config/colors.dart';
 import 'package:park/config/routes.dart';
 import 'package:park/page/booking//utils/booking_validator.dart';
+import 'package:park/widgets/car_dropdown.dart';
+import 'package:park/bloc/booking_bloc/booking_bloc.dart';
 
+/// Trang đặt chỗ đỗ xe
+/// Cho phép người dùng chọn thời gian và xem thông tin bãi đỗ xe
 class BookingPage extends StatefulWidget {
+  /// Thông tin bãi đỗ xe được chọn
   final ParkingLot parkingLot;
 
   const BookingPage({super.key, required this.parkingLot});
@@ -16,11 +23,49 @@ class BookingPage extends StatefulWidget {
 }
 
 class _BookingPageState extends State<BookingPage> {
+  /// Ngày được chọn để đặt chỗ
   DateTime _selectedDate = DateTime.now();
+  /// Thời gian bắt đầu đặt chỗ
   TimeOfDay _startTime = BookingValidator.getDefaultStartTime();
+  /// Thời gian kết thúc đặt chỗ
   TimeOfDay _endTime = BookingValidator.getDefaultEndTime();
+  /// Thông báo lỗi khi chọn thời gian không hợp lệ
   String? _errorMessage;
+  /// Loại xe được chọn
+  String? _selectedVehicleType;
 
+  String selectedVehicle = 'Car'; // mặc định là Car
+
+  /// Gọi sự kiện load slots từ bloc
+  void _loadSlots() {
+    if (_errorMessage != null || _selectedVehicleType == null) return;
+
+    final startDateTime = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+      _startTime.hour,
+      _startTime.minute,
+    );
+
+    final endDateTime = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+      _endTime.hour,
+      _endTime.minute,
+    );
+
+    context.read<BookingBloc>().add(LoadSlots(
+      widget.parkingLot.id,
+      startDateTime,
+      endDateTime,
+      _selectedVehicleType!,
+    ));
+  }
+
+  /// Kiểm tra xem ngày được chọn có hợp lệ không
+  /// Ngày phải là ngày hiện tại hoặc trong tương lai
   bool _isValidDate(DateTime date) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -28,17 +73,20 @@ class _BookingPageState extends State<BookingPage> {
     return selected.isAfter(today) || selected.isAtSameMomentAs(today);
   }
 
+  /// Kiểm tra xem thời gian được chọn cho ngày hiện tại có hợp lệ không
+  /// Thời gian phải sau thời gian hiện tại
   bool _isValidTimeForToday(TimeOfDay time) {
     final now = DateTime.now();
     final currentTime = TimeOfDay(hour: now.hour, minute: now.minute);
-    
-    // Chuyển đổi thời gian thành phút để so sánh
     final timeInMinutes = time.hour * 60 + time.minute;
     final currentTimeInMinutes = currentTime.hour * 60 + currentTime.minute;
-    
     return timeInMinutes >= currentTimeInMinutes;
   }
 
+  /// Kiểm tra xem khoảng thời gian đặt chỗ có hợp lệ không
+  /// - Thời gian kết thúc phải sau thời gian bắt đầu
+  /// - Khoảng thời gian không được quá 24 giờ
+  /// - Nếu là ngày hiện tại, thời gian bắt đầu phải sau thời gian hiện tại
   bool _isValidTimeRange(TimeOfDay start, TimeOfDay end) {
     final startMinutes = start.hour * 60 + start.minute;
     final endMinutes = end.hour * 60 + end.minute;
@@ -59,21 +107,26 @@ class _BookingPageState extends State<BookingPage> {
     return true;
   }
 
+  /// Cập nhật thời gian đặt chỗ và kiểm tra tính hợp lệ
   void _validateAndUpdateTime(TimeOfDay newStartTime, TimeOfDay newEndTime) {
     setState(() {
       _errorMessage = BookingValidator.validateBookingTime(_selectedDate, newStartTime, newEndTime);
       if (_errorMessage == null) {
         _startTime = newStartTime;
         _endTime = newEndTime;
+        _loadSlots();
       }
     });
   }
 
+  /// Cập nhật ngày đặt chỗ và kiểm tra tính hợp lệ
+  /// Nếu chọn ngày hiện tại, sẽ cập nhật thời gian mặc định
   void _validateAndUpdateDate(DateTime newDate) {
     setState(() {
       _errorMessage = BookingValidator.validateBookingTime(newDate, _startTime, _endTime);
       if (_errorMessage == null) {
         _selectedDate = newDate;
+        _loadSlots();
       } else {
         // Nếu là ngày hiện tại, cập nhật thời gian mặc định
         final now = DateTime.now();
@@ -134,7 +187,8 @@ class _BookingPageState extends State<BookingPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Thông tin bãi đỗ xe
+                      const SizedBox(height: 16),
+                      // Widget chọn loại xe
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
@@ -151,66 +205,28 @@ class _BookingPageState extends State<BookingPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: blueColor.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: const Icon(Icons.local_parking, color: blueColor, size: 24),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        widget.parkingLot.name,
-                                        style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        widget.parkingLot.address,
-                                        style: TextStyle(
-                                          color: Theme.of(context).textTheme.bodyMedium!.color!.withOpacity(0.7),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
+                            const Text(
+                              "Chọn loại xe",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                            const SizedBox(height: 12),
-                            const Divider(),
-                            const SizedBox(height: 12),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                _buildInfoItem(
-                                  context,
-                                  Icons.attach_money,
-                                  "Giá",
-                                  "${widget.parkingLot.pricePerHour} VND/giờ",
-                                ),
-                                _buildInfoItem(
-                                  context,
-                                  Icons.local_parking,
-                                  "Chỗ trống",
-                                  "${widget.parkingLot.totalSlots} chỗ",
-                                ),
-                              ],
+                            const SizedBox(height: 16),
+                            CarDropdown(
+                              onChanged: (String? value) {
+                                setState(() {
+                                  _selectedVehicleType = value;
+                                  if (value != null) {
+                                    _loadSlots();
+                                  }
+                                });
+                              },
                             ),
                           ],
                         ),
                       ),
-
                       const SizedBox(height: 16),
-
                       // Widget chọn thời gian
                       Container(
                         padding: const EdgeInsets.all(16),
@@ -258,11 +274,68 @@ class _BookingPageState extends State<BookingPage> {
                           ],
                         ),
                       ),
+                      // Hiển thị số lượng chỗ trống khi đã nhập đủ thông tin
+                      if (_errorMessage == null && _selectedVehicleType != null)
+                        BlocBuilder<BookingBloc, BookingState>(
+                          builder: (context, state) {
+                            int available = 0;
+                            if (state is BookingLoaded) {
+                              available = state.slots.where((slot) => !slot.isBooked).length;
+                              print('UI: Số slot trống nhận được từ bloc: $available');
+                            } else {
+                              print('UI: State hiện tại là $state');
+                            }
+                            return Container(
+                              margin: const EdgeInsets.only(top: 16),
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).cardColor,
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.1),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 5),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    "Thông tin đặt chỗ",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      _buildInfoItem(
+                                        context,
+                                        Icons.local_parking,
+                                        "Chỗ trống",
+                                        "$available chỗ",
+                                      ),
+                                      _buildInfoItem(
+                                        context,
+                                        Icons.access_time,
+                                        "Thời gian",
+                                        "${_startTime.format(context)} - ${_endTime.format(context)}",
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
                     ],
                   ),
                 ),
               ),
-
               // Nút "Tiếp tục"
               Container(
                 padding: const EdgeInsets.all(16),
@@ -279,7 +352,7 @@ class _BookingPageState extends State<BookingPage> {
                 child: SizedBox(
                   height: 56,
                   child: ElevatedButton(
-                    onPressed: _errorMessage != null ? null : () {
+                    onPressed: (_errorMessage != null || _selectedVehicleType == null) ? null : () {
                       Navigator.pushNamed(
                         context,
                         AppRoutes.bookingSlot,
@@ -288,6 +361,7 @@ class _BookingPageState extends State<BookingPage> {
                           'selectedDate': _selectedDate,
                           'startTime': _startTime,
                           'endTime': _endTime,
+                          'vehicleType': _selectedVehicleType,
                         },
                       );
                     },

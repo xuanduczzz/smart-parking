@@ -73,7 +73,7 @@ class ReviewBloc extends Bloc<ReviewEvent, ReviewState> {
           .collection('reservations')
           .doc(event.reservationId)
           .update({
-        'status': 'complete',
+        'status': 'completed',
         'completedAt': FieldValue.serverTimestamp(),
       });
 

@@ -1,3 +1,9 @@
+/// Trang hiển thị bản đồ và quản lý tương tác với bản đồ
+/// Bao gồm các chức năng:
+/// - Hiển thị vị trí người dùng
+/// - Hiển thị các bãi đỗ xe trên bản đồ
+/// - Tìm kiếm bãi đỗ xe
+/// - Menu điều hướng
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -17,6 +23,7 @@ import 'package:park/config/routes.dart';
 
 import '../../bloc/user_bloc/user_state.dart';
 
+/// Widget hiển thị trang bản đồ
 class MapPage extends StatefulWidget {
   const MapPage({super.key});
 
@@ -25,15 +32,20 @@ class MapPage extends StatefulWidget {
 }
 
 class _MapPageState extends State<MapPage> {
+  /// Controller để điều khiển Google Map
   final Completer<GoogleMapController> _controller = Completer();
+  
+  /// Vị trí hiện tại của người dùng
   LatLng? _userLocation;
+  
+  /// Marker cho kết quả tìm kiếm
   Marker? _searchMarker;
 
   @override
   void initState() {
     super.initState();
 
-
+    /// Lấy vị trí người dùng khi khởi tạo trang
     _determinePosition().then((position) {
       setState(() {
         _userLocation = LatLng(position.latitude, position.longitude);
@@ -42,15 +54,18 @@ class _MapPageState extends State<MapPage> {
       print("Lỗi lấy vị trí: $e");
     });
 
+    /// Thêm listener để áp dụng style bản đồ khi theme thay đổi
     ThemeController.themeNotifier.addListener(_applyMapStyle);
   }
 
   @override
   void dispose() {
+    /// Xóa listener khi dispose widget
     ThemeController.themeNotifier.removeListener(_applyMapStyle);
     super.dispose();
   }
 
+  /// Áp dụng style bản đồ dựa trên theme hiện tại
   void _applyMapStyle() async {
     final controller = await _controller.future;
     final isDark = ThemeController.themeNotifier.value == ThemeMode.dark;
@@ -66,10 +81,13 @@ class _MapPageState extends State<MapPage> {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
+        /// Provider cho MapBloc để quản lý trạng thái bản đồ
         BlocProvider(create: (context) => MapBloc(ParkingService())..add(LoadParkingMarkersEvent())),
+        /// Provider cho UserBloc để quản lý thông tin người dùng
         BlocProvider(create: (context) => UserBloc()..add(LoadUserInfo())),
       ],
       child: Scaffold(
+        /// AppBar với logo và nút thông báo
         appBar: AppBar(
           backgroundColor: blueColor,
           elevation: 0,
@@ -110,6 +128,7 @@ class _MapPageState extends State<MapPage> {
             ),
           ],
         ),
+        /// Drawer menu với thông tin người dùng và các tùy chọn
         drawer: Drawer(
           child: Column(
             children: [
@@ -124,6 +143,7 @@ class _MapPageState extends State<MapPage> {
                 child: SafeArea(
                   child: BlocBuilder<UserBloc, UserState>(
                     builder: (context, state) {
+                      /// Hiển thị trạng thái loading
                       if (state is UserLoading) {
                         return const UserAccountsDrawerHeader(
                           decoration: BoxDecoration(
@@ -147,6 +167,7 @@ class _MapPageState extends State<MapPage> {
                         );
                       }
 
+                      /// Hiển thị trạng thái lỗi
                       if (state is UserError) {
                         return UserAccountsDrawerHeader(
                           decoration: const BoxDecoration(
@@ -176,6 +197,7 @@ class _MapPageState extends State<MapPage> {
                         );
                       }
 
+                      /// Hiển thị thông tin người dùng đã đăng nhập
                       if (state is UserLoaded) {
                         return UserAccountsDrawerHeader(
                           decoration: const BoxDecoration(
@@ -206,6 +228,7 @@ class _MapPageState extends State<MapPage> {
                         );
                       }
 
+                      /// Hiển thị mặc định khi chưa có thông tin
                       return const UserAccountsDrawerHeader(
                         decoration: BoxDecoration(
                           color: Colors.transparent,
@@ -236,6 +259,7 @@ class _MapPageState extends State<MapPage> {
                   child: ListView(
                     padding: EdgeInsets.zero,
                     children: [
+                      /// Các mục menu trong drawer
                       _buildDrawerItem(
                         icon: Icons.person,
                         title: 'Hồ sơ cá nhân',
@@ -289,22 +313,29 @@ class _MapPageState extends State<MapPage> {
             ],
           ),
         ),
+        /// Body chứa bản đồ và thanh tìm kiếm
         body: _userLocation == null
             ? const Center(child: CircularProgressIndicator())
             : BlocBuilder<MapBloc, MapState>(
           builder: (context, state) {
+            /// Hiển thị loading khi đang tải dữ liệu
             if (state is MapLoading) return const Center(child: CircularProgressIndicator());
+            /// Hiển thị lỗi nếu có
             if (state is MapError) return Center(child: Text(state.message));
+            /// Hiển thị bản đồ với các marker
             if (state is MapLoaded) {
               Set<Marker> markers = {
+                /// Marker vị trí người dùng
                 Marker(
                   markerId: const MarkerId("user_location"),
                   position: _userLocation!,
                   icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
                   infoWindow: const InfoWindow(title: "Vị trí của bạn"),
                 ),
+                /// Marker kết quả tìm kiếm nếu có
                 if (_searchMarker != null) _searchMarker!,
               };
+              /// Thêm các marker bãi đỗ xe
               for (var lot in state.parkingLots) {
                 markers.add(
                   Marker(
@@ -322,6 +353,7 @@ class _MapPageState extends State<MapPage> {
 
               return Stack(
                 children: [
+                  /// Google Map widget
                   GoogleMap(
                     mapType: MapType.normal,
                     initialCameraPosition: CameraPosition(target: _userLocation!, zoom: 16),
@@ -334,6 +366,7 @@ class _MapPageState extends State<MapPage> {
                       _applyMapStyle();
                     },
                   ),
+                  /// Thanh tìm kiếm
                   Positioned(
                     top: 16,
                     left: 16,
@@ -378,6 +411,7 @@ class _MapPageState extends State<MapPage> {
             return const Center(child: Text("Không tải được bản đồ"));
           },
         ),
+        /// Nút định vị vị trí hiện tại
         floatingActionButton: FloatingActionButton(
           onPressed: () async => await _getCurrentLocation(),
           backgroundColor: blueColor,
@@ -387,6 +421,7 @@ class _MapPageState extends State<MapPage> {
     );
   }
 
+  /// Kiểm tra và yêu cầu quyền truy cập vị trí
   Future<Position> _determinePosition() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) return Future.error('Dịch vụ vị trí chưa bật.');
@@ -402,6 +437,7 @@ class _MapPageState extends State<MapPage> {
     return await Geolocator.getCurrentPosition();
   }
 
+  /// Cập nhật vị trí hiện tại của người dùng
   Future<void> _getCurrentLocation() async {
     Position position = await _determinePosition();
     LatLng newLocation = LatLng(position.latitude, position.longitude);
@@ -410,6 +446,7 @@ class _MapPageState extends State<MapPage> {
     controller.animateCamera(CameraUpdate.newLatLng(newLocation));
   }
 
+  /// Widget tạo các mục trong drawer menu
   Widget _buildDrawerItem({
     required IconData icon,
     required String title,

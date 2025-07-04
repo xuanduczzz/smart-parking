@@ -19,7 +19,9 @@ class ParkingService {
         List<ParkingSlot> slots = await _getSlotsForLot(lotId);
 
         final lot = ParkingLot.fromFirestore(lotId, data).copyWith(slots: slots);
-        lots.add(lot);
+        if (lot.status) {
+          lots.add(lot);
+        }
       }
     } catch (e) {
       print("Error fetching parking lots: $e");

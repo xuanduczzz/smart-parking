@@ -24,9 +24,19 @@ class _SearchPageState extends State<SearchPage> {
     try {
       final snapshot = await FirebaseFirestore.instance.collection('parking_lots').get();
 
-      List<ParkingLot> lots = snapshot.docs.map((doc) {
-        return ParkingLot.fromFirestore(doc.id, doc.data());
-      }).toList();
+      List<ParkingLot> lots = [];
+      for (var doc in snapshot.docs) {
+        // Lấy số lượng slots từ subcollection
+        final slotsSnapshot = await FirebaseFirestore.instance
+            .collection('parking_lots')
+            .doc(doc.id)
+            .collection('slots')
+            .get();
+            
+        final lot = ParkingLot.fromFirestore(doc.id, doc.data());
+        // Cập nhật totalSlots với số lượng document thực tế
+        lots.add(lot.copyWith(totalSlots: slotsSnapshot.docs.length));
+      }
 
       setState(() {
         allLots = lots;
@@ -242,7 +252,7 @@ class _SearchPageState extends State<SearchPage> {
                                                         ),
                                                         const SizedBox(width: 4),
                                                         Text(
-                                                          "${lot.pricePerHour} VND/giờ",
+                                                          "${lot.pricePerHour.toStringAsFixed(0)} VND/giờ",
                                                           style: const TextStyle(
                                                             color: Colors.green,
                                                             fontSize: 12,

@@ -10,7 +10,7 @@ Widget buildTotalPrice(double totalPrice) {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text('Tổng giá:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          Text('${totalPrice.toStringAsFixed(2)} VND', style: TextStyle(fontSize: 16, color: Colors.blueAccent)),
+          Text('${totalPrice.toStringAsFixed(0)} VND', style: TextStyle(fontSize: 16, color: Colors.blueAccent)),
         ],
       ),
     ),

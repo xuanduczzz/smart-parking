@@ -3,12 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:park/data/model/parking_lot.dart';
+import 'package:park/data/model/slots.dart';
 
 part 'home_event.dart';
 part 'home_state.dart';
 
 class HomeBloc extends Bloc<HomeEvent, HomeState> {
   final FirebaseFirestore _firestore;
+  Map<String, ParkingLot> _parkingLots = {};
 
   HomeBloc({FirebaseFirestore? firestore}) 
       : _firestore = firestore ?? FirebaseFirestore.instance,
@@ -36,11 +38,29 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       for (var lotDoc in parkingLotsSnapshot.docs) {
         final lotId = lotDoc.id;
         final lotData = lotDoc.data();
-        final parkingLot = ParkingLot.fromFirestore(lotId, lotData);
+        
+        // Lấy danh sách slots trước
+        List<ParkingSlot> slots = [];
+        try {
+          final slotsSnapshot = await _firestore
+              .collection('parking_lots')
+              .doc(lotId)
+              .collection('slots')
+              .get();
+          slots = slotsSnapshot.docs
+              .map((doc) => ParkingSlot.fromMap(doc.data() as Map<String, dynamic>))
+              .toList();
+        } catch (e) {
+          print('Lỗi khi lấy slots cho bãi xe ${lotId}: $e');
+        }
+
+        // Tạo parking lot với slots đã load
+        final parkingLot = ParkingLot.fromFirestore(lotId, lotData).copyWith(slots: slots);
+        _parkingLots[lotId] = parkingLot; // Lưu vào cache
 
         // Lấy thông tin chủ bãi
         String ownerPhone = 'Chưa có số điện thoại';
-        if (parkingLot.oid != null && parkingLot.oid!.isNotEmpty) {
+        if (parkingLot.oid.isNotEmpty) {
           try {
             final ownerDoc = await _firestore
                 .collection('user_owner')
@@ -77,10 +97,11 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         // Lưu thông tin vào map
         parkingLotsInfo[lotId] = {
           'address': parkingLot.address,
-          'totalSlots': parkingLot.totalSlots,
+          'totalSlots': slots.length,
           'pricePerHour': parkingLot.pricePerHour,
           'ownerPhone': ownerPhone,
           'averageRating': averageRating,
+          'slots': slots,
         };
       }
 

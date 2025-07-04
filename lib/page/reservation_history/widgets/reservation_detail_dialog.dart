@@ -105,7 +105,7 @@ class ReservationDetailDialog extends StatelessWidget {
                 _buildDetailRow(context, Icons.phone, 'Số điện thoại', reservation.phoneNumber),
                 _buildDetailRow(context, Icons.access_time, 'Bắt đầu', DateFormat('dd/MM/yyyy HH:mm').format(reservation.startTime)),
                 _buildDetailRow(context, Icons.timer_off, 'Kết thúc', DateFormat('dd/MM/yyyy HH:mm').format(reservation.endTime)),
-                _buildDetailRow(context, Icons.payments, 'Tổng giá', '${reservation.totalPrice.toStringAsFixed(2)} VND', valueColor: Colors.green),
+                _buildDetailRow(context, Icons.payments, 'Tổng giá', '${reservation.totalPrice.toStringAsFixed(0)} VND', valueColor: Colors.green),
               ],
             ),
           ),
@@ -123,7 +123,7 @@ class ReservationDetailDialog extends StatelessWidget {
         _buildDetailRow(context, Icons.access_time, 'Bắt đầu', DateFormat('dd/MM/yyyy HH:mm').format(reservation.startTime)),
         _buildDetailRow(context, Icons.timer_off, 'Kết thúc', DateFormat('dd/MM/yyyy HH:mm').format(reservation.endTime)),
         _buildDetailRow(context, Icons.attach_money, 'Giá/giờ', '${reservation.pricePerHour} VND'),
-        _buildDetailRow(context, Icons.payments, 'Tổng giá', '${reservation.totalPrice.toStringAsFixed(2)} VND', valueColor: Colors.green),
+        _buildDetailRow(context, Icons.payments, 'Tổng giá', '${reservation.totalPrice.toStringAsFixed(0)} VND', valueColor: Colors.green),
         _buildDetailRow(context, Icons.info, 'Trạng thái', reservation.status, valueColor: _getStatusColor(reservation.status)),
       ],
     );
@@ -235,11 +235,11 @@ class ReservationDetailDialog extends StatelessWidget {
 
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
-      case 'đã xác nhận':
+      case 'confirmed':
         return Colors.green;
-      case 'đang chờ':
+      case 'pending':
         return Colors.orange;
-      case 'đã hủy':
+      case 'cancel':
         return Colors.red;
       default:
         return Colors.grey;
